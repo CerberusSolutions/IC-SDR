@@ -26,6 +26,7 @@ const (
 
 type MemoryEntry struct {
 	Name              string `json:"name"`
+	Description       string `json:"description,omitempty"`
 	FrequencyHz       int64  `json:"frequencyHz"`
 	Mode              string `json:"mode"`
 	FilterBandwidthHz int    `json:"filterBandwidthHz"`
@@ -61,6 +62,10 @@ type MemoryPanel struct {
 	duplicateNames                                                             []string
 	pendingGroup                                                               string
 	pendingGroupColor                                                          int
+	pendingOriginalGroup                                                       string
+	pendingGroupScan                                                           bool
+	pendingGroupPriority                                                       bool
+	pendingMoveGroup                                                           string
 	pendingEditIndex                                                           int
 	editField                                                                  int
 	editBuffer                                                                 string
@@ -183,6 +188,8 @@ func (p *MemoryPanel) loadEditBuffer() {
 		p.editBuffer = strconv.Itoa(p.pendingMemory.FilterBandwidthHz)
 	case 5:
 		p.editBuffer = strconv.FormatInt(p.pendingMemory.StepHz, 10)
+	case 6:
+		p.editBuffer = p.pendingMemory.Description
 	default:
 		p.editBuffer = ""
 	}
@@ -219,6 +226,8 @@ func (p *MemoryPanel) storeEditBuffer() bool {
 			return false
 		}
 		p.pendingMemory.StepHz = n
+	case 6:
+		p.pendingMemory.Description = v
 	}
 	return true
 }
@@ -234,10 +243,17 @@ func (p *MemoryPanel) commitEdit() {
 	p.closeModal()
 }
 func (p *MemoryPanel) openGroupModal() {
-	if p.selectedGroup == "" || p.selectedGroup == "TODAS" {
+	if p.selectedGroup == "" || p.selectedGroup == "TODAS" || p.selectedGroup == "SIN GRUPO" {
 		return
 	}
-	p.pendingGroup = p.selectedGroup
+	p.pendingOriginalGroup, p.pendingGroup = p.selectedGroup, p.selectedGroup
+	p.pendingGroupScan, p.pendingGroupPriority = true, false
+	for _, memory := range p.memories {
+		if memoryGroup(memory) == p.selectedGroup {
+			p.pendingGroupScan = p.pendingGroupScan && memory.ScanEnabled
+			p.pendingGroupPriority = p.pendingGroupPriority || memory.Priority
+		}
+	}
 	p.pendingGroupColor = 0
 	current := p.groupColor(p.selectedGroup)
 	best := int64(1 << 62)
@@ -251,17 +267,63 @@ func (p *MemoryPanel) openGroupModal() {
 	p.modal, p.modalPressed = "group", 0
 }
 func (p *MemoryPanel) commitGroupColor() {
-	if p.pendingGroup == "" {
-		p.closeModal()
+	name := strings.TrimSpace(p.pendingGroup)
+	original := p.pendingOriginalGroup
+	if original == "" {
+		original = name
+	}
+	if p.pendingMoveGroup != "" {
+		name = p.pendingMoveGroup
+	}
+	if name == "" || strings.EqualFold(name, "TODAS") || strings.EqualFold(name, "SIN GRUPO") {
+		p.editError = "Introduce un nombre de grupo válido."
 		return
 	}
-	p.groupColors[p.pendingGroup] = colorHex(memoryGroupPalette[p.pendingGroupColor])
+	if !strings.EqualFold(name, p.pendingOriginalGroup) && p.groupExists(name) {
+		p.editError = "Ya existe un grupo con ese nombre."
+		return
+	}
+	for i := range p.memories {
+		if memoryGroup(p.memories[i]) == original {
+			p.memories[i].Group, p.memories[i].ScanEnabled, p.memories[i].Priority = name, p.pendingGroupScan, p.pendingGroupPriority
+		}
+	}
+	delete(p.groupColors, original)
+	p.groupColors[name] = colorHex(memoryGroupPalette[p.pendingGroupColor])
+	p.selectedGroup = name
+	p.save()
+	p.rebuildGroups()
 	p.saveGroupColors()
 	p.closeModal()
 }
 
+func (p *MemoryPanel) deleteEditedGroup() {
+	for i := range p.memories {
+		if memoryGroup(p.memories[i]) == p.pendingOriginalGroup {
+			p.memories[i].Group = "SIN GRUPO"
+		}
+	}
+	delete(p.groupColors, p.pendingOriginalGroup)
+	p.selectedGroup, p.selected = "TODAS", -1
+	p.save()
+	p.saveGroupColors()
+	p.rebuildGroups()
+	p.closeModal()
+}
+
+func (p *MemoryPanel) moveEditedGroup() {
+	targets := []string{"SIN GRUPO"}
+	for _, group := range p.groups {
+		if group != "TODAS" && group != p.pendingOriginalGroup && group != "SIN GRUPO" {
+			targets = append(targets, group)
+		}
+	}
+	p.pendingMoveGroup = cycleString(p.pendingMoveGroup, targets)
+}
+
 func (p *MemoryPanel) openNewGroupModal() {
 	p.pendingGroup = ""
+	p.pendingOriginalGroup, p.pendingMoveGroup = "", ""
 	p.pendingGroupColor = 0
 	p.modal, p.modalPressed = "new-group", 0
 }
@@ -411,7 +473,11 @@ func (p *MemoryPanel) rebuildGroups() {
 
 func (p *MemoryPanel) openSaveModal() {
 	name := fmt.Sprintf("MEM %02d", len(p.memories)+1)
-	p.pendingMemory = MemoryEntry{Name: name, FrequencyHz: p.screen.frequencyHz, Mode: p.screen.mode.SelectedText(), FilterBandwidthHz: p.screen.demodBandwidthHz, StepHz: p.screen.tuningStepHz, ScanEnabled: true, Group: "SIN GRUPO"}
+	group := "SIN GRUPO"
+	if p.selectedGroup != "" && p.selectedGroup != "TODAS" {
+		group = p.selectedGroup
+	}
+	p.pendingMemory = MemoryEntry{Name: name, FrequencyHz: p.screen.frequencyHz, Mode: p.screen.mode.SelectedText(), FilterBandwidthHz: p.screen.demodBandwidthHz, StepHz: p.screen.tuningStepHz, ScanEnabled: true, Group: group}
 	if p.screen.subtonePanel != nil {
 		status := p.screen.subtonePanel.status()
 		if status.Detected && status.Kind == "CTCSS" {
@@ -422,10 +488,15 @@ func (p *MemoryPanel) openSaveModal() {
 		}
 	}
 	p.duplicateNames = p.memoriesAtFrequency(p.pendingMemory.FrequencyHz)
-	p.modal, p.modalPressed = "save", 0
+	p.modal, p.modalPressed, p.editField, p.editError = "create", 0, 0, ""
+	p.loadEditBuffer()
 }
 
 func (p *MemoryPanel) commitCurrent() {
+	if !p.storeEditBuffer() {
+		return
+	}
+	p.duplicateNames = p.memoriesAtFrequency(p.pendingMemory.FrequencyHz)
 	p.memories = append(p.memories, p.pendingMemory)
 	p.selected = len(p.memories) - 1
 	p.rebuildGroups()
@@ -533,14 +604,20 @@ func (p *MemoryPanel) Draw()                      {}
 func (p *MemoryPanel) OverlayOpen() bool          { return p.modal != "" }
 
 func (p *MemoryPanel) modalCancelBounds() rl.Rectangle {
-	if p.modal == "edit" {
+	if p.memoryEditorOpen() {
+		return rl.Rectangle{X: 520, Y: 715, Width: 220, Height: 52}
+	}
+	if p.modal == "group" {
 		return rl.Rectangle{X: 520, Y: 650, Width: 220, Height: 52}
 	}
 	return rl.Rectangle{X: 520, Y: 510, Width: 220, Height: 52}
 }
 
 func (p *MemoryPanel) modalConfirmBounds() rl.Rectangle {
-	if p.modal == "edit" {
+	if p.memoryEditorOpen() {
+		return rl.Rectangle{X: 860, Y: 715, Width: 220, Height: 52}
+	}
+	if p.modal == "group" {
 		return rl.Rectangle{X: 860, Y: 650, Width: 220, Height: 52}
 	}
 	return rl.Rectangle{X: 860, Y: 510, Width: 220, Height: 52}
@@ -554,7 +631,7 @@ func (p *MemoryPanel) UpdateOverlay(input simpleui.Input) bool {
 		p.closeModal()
 		return true
 	}
-	if p.modal == "new-group" {
+	if p.modal == "new-group" || p.modal == "group" {
 		if rl.IsKeyPressed(rl.KeyBackspace) && len([]rune(p.pendingGroup)) > 0 {
 			runes := []rune(p.pendingGroup)
 			p.pendingGroup = string(runes[:len(runes)-1])
@@ -565,28 +642,41 @@ func (p *MemoryPanel) UpdateOverlay(input simpleui.Input) bool {
 			}
 		}
 		if rl.IsKeyPressed(rl.KeyEnter) {
-			p.commitNewGroup()
+			if p.modal == "group" {
+				p.commitGroupColor()
+			} else {
+				p.commitNewGroup()
+			}
 			return true
 		}
 	}
-	if p.modal == "edit" {
-		editable := p.editField == 0 || p.editField == 1 || p.editField == 4 || p.editField == 5
+	if p.memoryEditorOpen() {
+		editable := p.editField == 0 || p.editField == 1 || p.editField == 4 || p.editField == 5 || p.editField == 6
 		if editable && rl.IsKeyPressed(rl.KeyBackspace) && len([]rune(p.editBuffer)) > 0 {
 			r := []rune(p.editBuffer)
 			p.editBuffer = string(r[:len(r)-1])
 		}
 		for ch := rl.GetCharPressed(); ch > 0; ch = rl.GetCharPressed() {
 			validNumber := ch >= '0' && ch <= '9' || ch == '.' || ch == ','
-			if ch >= 32 && ch != 127 && len([]rune(p.editBuffer)) < 32 && (p.editField == 0 || editable && validNumber) {
+			limit := 32
+			if p.editField == 6 {
+				limit = 160
+			}
+			textField := p.editField == 0 || p.editField == 6
+			if ch >= 32 && ch != 127 && len([]rune(p.editBuffer)) < limit && (textField || editable && validNumber) {
 				p.editBuffer += string(ch)
 			}
 		}
 		if rl.IsKeyPressed(rl.KeyTab) && p.storeEditBuffer() {
-			p.editField = (p.editField + 1) % 6
+			p.editField = (p.editField + 1) % 7
 			p.loadEditBuffer()
 		}
 		if rl.IsKeyPressed(rl.KeyEnter) {
-			p.commitEdit()
+			if p.modal == "create" {
+				p.commitCurrent()
+			} else {
+				p.commitEdit()
+			}
 			return true
 		}
 	}
@@ -600,8 +690,26 @@ func (p *MemoryPanel) UpdateOverlay(input simpleui.Input) bool {
 					return true
 				}
 			}
+			if p.modal == "group" {
+				if input.Over(rl.Rectangle{X: 500, Y: 450, Width: 285, Height: 42}) {
+					p.pendingGroupScan = !p.pendingGroupScan
+					return true
+				}
+				if input.Over(rl.Rectangle{X: 815, Y: 450, Width: 285, Height: 42}) {
+					p.pendingGroupPriority = !p.pendingGroupPriority
+					return true
+				}
+				if input.Over(rl.Rectangle{X: 500, Y: 520, Width: 285, Height: 48}) {
+					p.moveEditedGroup()
+					return true
+				}
+				if input.Over(rl.Rectangle{X: 815, Y: 520, Width: 285, Height: 48}) {
+					p.deleteEditedGroup()
+					return true
+				}
+			}
 		}
-		if p.modal == "edit" {
+		if p.memoryEditorOpen() {
 			for i, bounds := range p.editFieldBounds() {
 				if input.Over(bounds) {
 					if !p.storeEditBuffer() {
@@ -617,11 +725,11 @@ func (p *MemoryPanel) UpdateOverlay(input simpleui.Input) bool {
 					return true
 				}
 			}
-			if input.Over(rl.Rectangle{X: 500, Y: 565, Width: 285, Height: 42}) {
+			if input.Over(rl.Rectangle{X: 500, Y: 620, Width: 285, Height: 42}) {
 				p.pendingMemory.ScanEnabled = !p.pendingMemory.ScanEnabled
 				return true
 			}
-			if input.Over(rl.Rectangle{X: 815, Y: 565, Width: 285, Height: 42}) {
+			if input.Over(rl.Rectangle{X: 815, Y: 620, Width: 285, Height: 42}) {
 				p.pendingMemory.Priority = !p.pendingMemory.Priority
 				return true
 			}
@@ -638,7 +746,7 @@ func (p *MemoryPanel) UpdateOverlay(input simpleui.Input) bool {
 			p.closeModal()
 		} else if p.modalPressed == 2 && input.Over(p.modalConfirmBounds()) {
 			simpleui.PlayActivationFeedback()
-			if p.modal == "save" {
+			if p.modal == "create" {
 				p.commitCurrent()
 			} else if p.modal == "group" {
 				p.commitGroupColor()
@@ -661,36 +769,40 @@ func (p *MemoryPanel) DrawOverlay() {
 	}
 	rl.DrawRectangle(0, 0, int32(designWidth), int32(designHeight), rl.Color{A: 220})
 	modal := rl.Rectangle{X: 440, Y: 260, Width: 720, Height: 330}
-	if p.modal == "edit" {
+	if p.memoryEditorOpen() {
+		modal = rl.Rectangle{X: 440, Y: 105, Width: 720, Height: 690}
+	} else if p.modal == "group" {
 		modal = rl.Rectangle{X: 440, Y: 170, Width: 720, Height: 560}
 	}
-	rl.DrawRectangleRounded(modal, .035, 8, rl.Color{R: 13, G: 17, B: 23, A: 255})
+	rl.DrawRectangleRounded(modal, .035, 8, colors.panel)
 	accent := colors.green
 	title := "GUARDAR MEMORIA"
 	confirm := "GUARDAR"
-	if p.modal == "save" && len(p.duplicateNames) > 0 {
+	if p.modal == "create" && len(p.duplicateNames) > 0 {
 		confirm = "GUARDAR DUPLICADA"
 	}
 	if p.modal == "delete" {
 		accent, title, confirm = colors.red, "ELIMINAR MEMORIA", "ELIMINAR"
 	} else if p.modal == "group" {
-		accent, title, confirm = p.groupColor(p.pendingGroup), "COLOR DEL GRUPO", "APLICAR COLOR"
+		accent, title, confirm = memoryGroupPalette[p.pendingGroupColor], "EDITAR GRUPO", "GUARDAR CAMBIOS"
 	} else if p.modal == "new-group" {
 		accent, title, confirm = memoryGroupPalette[p.pendingGroupColor], "NUEVO GRUPO", "CREAR GRUPO"
 	}
 	if p.modal == "edit" {
 		accent, title, confirm = colors.cyan, "EDITAR MEMORIA", "GUARDAR CAMBIOS"
+	} else if p.modal == "create" {
+		accent, title, confirm = colors.green, "NUEVA MEMORIA", "GUARDAR MEMORIA"
 	}
 	rl.DrawRectangleRoundedLinesEx(modal, .035, 8, 2, accent)
 	titleBounds := rl.Rectangle{X: 470, Y: 286, Width: 660, Height: 34}
-	if p.modal == "edit" {
+	if p.memoryEditorOpen() {
+		titleBounds.Y = 126
+	} else if p.modal == "group" {
 		titleBounds.Y = 192
 	}
 	drawCentered(title, titleBounds, 22, accent)
-	if p.modal == "edit" {
+	if p.memoryEditorOpen() {
 		p.drawEditModalContent()
-	} else if p.modal == "save" {
-		p.drawSaveModalContent()
 	} else if p.modal == "group" {
 		p.drawGroupModalContent()
 	} else if p.modal == "new-group" {
@@ -702,11 +814,14 @@ func (p *MemoryPanel) DrawOverlay() {
 	drawModalAction(p.modalConfirmBounds(), confirm, accent, p.modalPressed == 2)
 }
 
+func (p *MemoryPanel) memoryEditorOpen() bool { return p.modal == "edit" || p.modal == "create" }
+
 func (p *MemoryPanel) editFieldBounds() []rl.Rectangle {
 	return []rl.Rectangle{
-		{X: 500, Y: 255, Width: 285, Height: 52}, {X: 815, Y: 255, Width: 285, Height: 52},
-		{X: 500, Y: 355, Width: 285, Height: 52}, {X: 815, Y: 355, Width: 285, Height: 52},
-		{X: 500, Y: 455, Width: 285, Height: 52}, {X: 815, Y: 455, Width: 285, Height: 52},
+		{X: 500, Y: 205, Width: 285, Height: 52}, {X: 815, Y: 205, Width: 285, Height: 52},
+		{X: 500, Y: 305, Width: 285, Height: 52}, {X: 815, Y: 305, Width: 285, Height: 52},
+		{X: 500, Y: 405, Width: 285, Height: 52}, {X: 815, Y: 405, Width: 285, Height: 52},
+		{X: 500, Y: 515, Width: 600, Height: 58},
 	}
 }
 
@@ -744,18 +859,18 @@ func (p *MemoryPanel) cycleEditMode() {
 }
 
 func (p *MemoryPanel) drawEditModalContent() {
-	labels := []string{"NOMBRE", "FRECUENCIA (MHz)", "GRUPO (CLIC PARA CAMBIAR)", "MODO (CLIC PARA CAMBIAR)", "FILTRO (Hz)", "PASO (Hz)"}
-	values := []string{p.pendingMemory.Name, fmt.Sprintf("%.6f", float64(p.pendingMemory.FrequencyHz)/1e6), p.pendingMemory.Group + "   >", p.pendingMemory.Mode + "   >", strconv.Itoa(p.pendingMemory.FilterBandwidthHz), strconv.FormatInt(p.pendingMemory.StepHz, 10)}
+	labels := []string{"NOMBRE", "FRECUENCIA (MHz)", "GRUPO (CLIC PARA CAMBIAR)", "MODO (CLIC PARA CAMBIAR)", "FILTRO (Hz)", "PASO (Hz)", "DESCRIPCIÓN"}
+	values := []string{p.pendingMemory.Name, fmt.Sprintf("%.6f", float64(p.pendingMemory.FrequencyHz)/1e6), p.pendingMemory.Group + "   >", p.pendingMemory.Mode + "   >", strconv.Itoa(p.pendingMemory.FilterBandwidthHz), strconv.FormatInt(p.pendingMemory.StepHz, 10), trimMemory(p.pendingMemory.Description, 72)}
 	for i, bounds := range p.editFieldBounds() {
 		simpleui.DrawText(labels[i], bounds.X, bounds.Y-22, 13, colors.muted)
 		border := colors.border
 		if i == p.editField {
 			border = colors.cyan
-			if i == 0 || i == 1 || i == 4 || i == 5 {
-				values[i] = p.editBuffer + "|"
+			if i == 0 || i == 1 || i == 4 || i == 5 || i == 6 {
+				values[i] = trimMemory(p.editBuffer, 72) + "|"
 			}
 		}
-		rl.DrawRectangleRounded(bounds, .1, 6, rl.Color{R: 7, G: 12, B: 18, A: 255})
+		rl.DrawRectangleRounded(bounds, .1, 6, simpleui.CurrentTheme().InputBackground)
 		rl.DrawRectangleRoundedLinesEx(bounds, .1, 6, 2, border)
 		simpleui.DrawText(values[i], bounds.X+14, bounds.Y+16, 17, colors.text)
 	}
@@ -765,18 +880,27 @@ func (p *MemoryPanel) drawEditModalContent() {
 		if active {
 			accent, state = colors.green, "ON"
 		}
-		rl.DrawRectangleRounded(bounds, .12, 6, rl.Color{R: 18, G: 27, B: 35, A: 255})
+		rl.DrawRectangleRounded(bounds, .12, 6, colors.panelAlt)
 		rl.DrawRectangleRoundedLinesEx(bounds, .12, 6, 2, accent)
 		drawCentered(label+"  "+state, bounds, 14, colors.text)
 	}
-	drawEditToggle(rl.Rectangle{X: 500, Y: 565, Width: 285, Height: 42}, "INCLUIR EN ESCÁNER", p.pendingMemory.ScanEnabled)
-	drawEditToggle(rl.Rectangle{X: 815, Y: 565, Width: 285, Height: 42}, "PRIORIDAD", p.pendingMemory.Priority)
+	drawEditToggle(rl.Rectangle{X: 500, Y: 620, Width: 285, Height: 42}, "INCLUIR EN ESCÁNER", p.pendingMemory.ScanEnabled)
+	drawEditToggle(rl.Rectangle{X: 815, Y: 620, Width: 285, Height: 42}, "PRIORIDAD", p.pendingMemory.Priority)
 	if p.editError != "" {
-		drawCentered(p.editError, rl.Rectangle{X: 490, Y: 615, Width: 620, Height: 22}, 13, colors.red)
+		drawCentered(p.editError, rl.Rectangle{X: 490, Y: 675, Width: 620, Height: 22}, 13, colors.red)
+	} else if p.modal == "create" && len(p.memoriesAtFrequency(p.pendingMemory.FrequencyHz)) > 0 {
+		drawCentered("Aviso: ya existe otra memoria en esta frecuencia.", rl.Rectangle{X: 490, Y: 675, Width: 620, Height: 22}, 13, colors.orange)
 	}
 }
 
 func (p *MemoryPanel) groupColorBounds() []rl.Rectangle {
+	if p.modal == "group" {
+		bounds := make([]rl.Rectangle, len(memoryGroupPalette))
+		for i := range bounds {
+			bounds[i] = rl.Rectangle{X: 570 + float32(i)*64, Y: 350, Width: 42, Height: 42}
+		}
+		return bounds
+	}
 	bounds := make([]rl.Rectangle, len(memoryGroupPalette))
 	for i := range bounds {
 		bounds[i] = rl.Rectangle{X: 500 + float32(i%4)*150, Y: 374 + float32(i/4)*75, Width: 118, Height: 48}
@@ -784,27 +908,55 @@ func (p *MemoryPanel) groupColorBounds() []rl.Rectangle {
 	return bounds
 }
 func (p *MemoryPanel) drawGroupModalContent() {
-	drawCentered(p.pendingGroup, rl.Rectangle{X: 490, Y: 330, Width: 620, Height: 30}, 18, colors.text)
+	simpleui.DrawText("NOMBRE DEL GRUPO", 500, 252, 14, colors.muted)
+	field := rl.Rectangle{X: 500, Y: 278, Width: 600, Height: 48}
+	rl.DrawRectangleRounded(field, .1, 6, simpleui.CurrentTheme().InputBackground)
+	rl.DrawRectangleRoundedLinesEx(field, .1, 6, 2, colors.cyan)
+	simpleui.DrawText(p.pendingGroup+"|", 514, 293, 17, colors.text)
+	simpleui.DrawText("COLOR", 500, 362, 14, colors.muted)
 	for i, bounds := range p.groupColorBounds() {
 		c := memoryGroupPalette[i]
-		rl.DrawRectangleRounded(bounds, .18, 6, c)
-		border := colors.text
-		width := float32(1)
+		rl.DrawCircle(int32(bounds.X+bounds.Width/2), int32(bounds.Y+bounds.Height/2), 14, c)
+		border, width := colors.text, float32(1)
 		if i == p.pendingGroupColor {
 			border = rl.White
-			width = 4
+			width = 3
 		}
-		rl.DrawRectangleRoundedLinesEx(bounds, .18, 6, width, border)
-		if i == p.pendingGroupColor {
-			drawCentered("SELECCIONADO", bounds, 11, rl.Color{R: 8, G: 12, B: 18, A: 255})
+		rl.DrawCircleLines(int32(bounds.X+bounds.Width/2), int32(bounds.Y+bounds.Height/2), 18, border)
+		_ = width
+	}
+	count := 0
+	for _, memory := range p.memories {
+		if memoryGroup(memory) == p.pendingOriginalGroup {
+			count++
 		}
 	}
-	drawCentered("El color se aplicará a la lista, marcadores y tooltip del FFT.", rl.Rectangle{X: 490, Y: 485, Width: 620, Height: 20}, 12, colors.muted)
+	simpleui.DrawTextStyled(fmt.Sprintf("%d MEMORIAS", count), 500, 412, 15, simpleui.FontSemiBold, colors.text)
+	drawGroupToggle := func(bounds rl.Rectangle, label string, active bool) {
+		accent, state := colors.border, "OFF"
+		if active {
+			accent, state = colors.green, "ON"
+		}
+		rl.DrawRectangleRounded(bounds, .12, 6, colors.panelAlt)
+		rl.DrawRectangleRoundedLinesEx(bounds, .12, 6, 2, accent)
+		drawCentered(label+"  "+state, bounds, 14, colors.text)
+	}
+	drawGroupToggle(rl.Rectangle{X: 500, Y: 450, Width: 285, Height: 42}, "INCLUIR EN ESCÁNER", p.pendingGroupScan)
+	drawGroupToggle(rl.Rectangle{X: 815, Y: 450, Width: 285, Height: 42}, "PRIORIDAD", p.pendingGroupPriority)
+	moveLabel := "MOVER MEMORIAS"
+	if p.pendingMoveGroup != "" {
+		moveLabel = "MOVER A: " + p.pendingMoveGroup
+	}
+	drawModalAction(rl.Rectangle{X: 500, Y: 520, Width: 285, Height: 48}, moveLabel, colors.border, false)
+	drawModalAction(rl.Rectangle{X: 815, Y: 520, Width: 285, Height: 48}, "ELIMINAR GRUPO", colors.red, false)
+	if p.editError != "" {
+		drawCentered(p.editError, rl.Rectangle{X: 490, Y: 605, Width: 620, Height: 22}, 13, colors.red)
+	}
 }
 
 func (p *MemoryPanel) drawNewGroupModalContent() {
 	field := rl.Rectangle{X: 500, Y: 330, Width: 600, Height: 38}
-	rl.DrawRectangleRounded(field, .12, 6, rl.Color{R: 7, G: 12, B: 18, A: 255})
+	rl.DrawRectangleRounded(field, .12, 6, simpleui.CurrentTheme().InputBackground)
 	rl.DrawRectangleRoundedLinesEx(field, .12, 6, 2, memoryGroupPalette[p.pendingGroupColor])
 	name := p.pendingGroup
 	if name == "" {
@@ -851,13 +1003,13 @@ func (p *MemoryPanel) drawDeleteModalContent() {
 }
 
 func drawModalAction(bounds rl.Rectangle, label string, accent rl.Color, pressed bool) {
-	background := rl.Color{R: 36, G: 47, B: 57, A: 255}
+	background := colors.panelAlt
 	if pressed {
 		background = accent
 	}
 	rl.DrawRectangleRounded(bounds, .12, 7, background)
 	rl.DrawRectangleRoundedLinesEx(bounds, .12, 7, 2, accent)
-	drawCentered(label, bounds, 16, colors.text)
+	drawCentered(label, bounds, 16, simpleui.EnsureTextContrast(colors.text, background))
 }
 
 func (p *MemoryPanel) recall(m MemoryEntry) {
@@ -918,10 +1070,13 @@ func (p *MemoryPanel) DrawPanel() {
 			break
 		}
 		y := memoryFirstRowY + float32(i)*21
-		if g == p.selectedGroup {
-			rl.DrawRectangleRounded(rl.Rectangle{X: 36, Y: y - 5, Width: 192, Height: 20}, .15, 4, rl.Color{R: 18, G: 72, B: 105, A: 255})
-		}
 		groupColor := p.groupColor(g)
+		countColor := colors.muted
+		if g == p.selectedGroup {
+			selection, selectionText := tableSelectionColors()
+			rl.DrawRectangleRounded(rl.Rectangle{X: 36, Y: y - 5, Width: 192, Height: 20}, .15, 4, selection)
+			groupColor, countColor = selectionText, selectionText
+		}
 		rl.DrawCircle(44, int32(y+4), 4, groupColor)
 		drawMemoryText(g, 54, y, groupColor)
 		count := 0
@@ -930,7 +1085,7 @@ func (p *MemoryPanel) DrawPanel() {
 				count++
 			}
 		}
-		drawMemoryText(fmt.Sprintf("%d", count), 205, y, colors.muted)
+		drawMemoryText(fmt.Sprintf("%d", count), 205, y, countColor)
 	}
 	drawPanel(245, memoryPanelTop, 1100, memoryPanelH)
 	headers := []string{"ACT", "NOMBRE", "FRECUENCIA", "MODO", "FILTRO", "STEP", "PRI"}
@@ -945,10 +1100,13 @@ func (p *MemoryPanel) DrawPanel() {
 	for row, index := range indices[p.scrollOffset:end] {
 		m := p.memories[index]
 		yy := memoryFirstRowY + float32(row)*memoryRowH
-		if index == p.selected {
-			rl.DrawRectangle(248, int32(yy-3), 1094, 22, rl.Color{R: 18, G: 72, B: 105, A: 255})
-		}
 		groupColor := p.groupColor(memoryGroup(m))
+		rowText, activeColor, starColor := colors.text, colors.cyan, colors.orange
+		if index == p.selected {
+			selection, selectionText := tableSelectionColors()
+			rl.DrawRectangle(248, int32(yy-3), 1094, 22, selection)
+			groupColor, rowText, activeColor, starColor = selectionText, selectionText, selectionText, selectionText
+		}
 		rl.DrawRectangle(248, int32(yy-3), 4, 22, groupColor)
 		active := "□"
 		if m.ScanEnabled {
@@ -958,13 +1116,13 @@ func (p *MemoryPanel) DrawPanel() {
 		if m.Priority {
 			star = "★"
 		}
-		drawMemoryText(active, 257, yy, colors.cyan)
+		drawMemoryText(active, 257, yy, activeColor)
 		drawMemoryText(trimMemory(m.Name, 20), 300, yy, groupColor)
-		drawMemoryText(fmt.Sprintf("%.6f", float64(m.FrequencyHz)/1e6), 600, yy, colors.text)
-		drawMemoryText(m.Mode, 800, yy, colors.text)
-		drawMemoryText(formatFilterBandwidth(m.FilterBandwidthHz), 900, yy, colors.text)
-		drawMemoryText(formatStep(m.StepHz), 1030, yy, colors.text)
-		drawMemoryText(star, 1180, yy, colors.orange)
+		drawMemoryText(fmt.Sprintf("%.6f", float64(m.FrequencyHz)/1e6), 600, yy, rowText)
+		drawMemoryText(m.Mode, 800, yy, rowText)
+		drawMemoryText(formatFilterBandwidth(m.FilterBandwidthHz), 900, yy, rowText)
+		drawMemoryText(formatStep(m.StepHz), 1030, yy, rowText)
+		drawMemoryText(star, 1180, yy, starColor)
 	}
 	if len(indices) > memoryVisibleRows {
 		trackY, trackH := float32(668), float32(145)
@@ -1159,20 +1317,22 @@ func (p *MemoryPanel) DrawMarkers(x, y, w, h float32) {
 		// Four dedicated memory lanes sit above the band-plan ribbon.
 		labelY := y + h - 76 - float32(lane)*22
 		bounds := rl.Rectangle{X: left, Y: labelY, Width: tw + 12, Height: 19}
-		rl.DrawRectangleRounded(bounds, .2, 4, rl.Color{R: 8, G: 14, B: 21, A: 235})
+		labelBackground := colors.panel
+		labelBackground.A = 242
+		rl.DrawRectangleRounded(bounds, .2, 4, labelBackground)
 		rl.DrawRectangleRoundedLinesEx(bounds, .2, 4, 1, color)
-		simpleui.DrawTextStyled(label, left+6, labelY+3, 11, simpleui.FontSemiBold, color)
+		simpleui.DrawTextStyled(label, left+6, labelY+3, 11, simpleui.FontSemiBold, simpleui.EnsureTextContrast(color, labelBackground))
 		laneRight[lane] = left + tw + 12
 	}
 }
 
-func (p *MemoryPanel) DrawMarkerTooltip(x, y, w, h float32) {
+func (p *MemoryPanel) DrawMarkerTooltip(x, y, w, h float32) bool {
 	if !p.markersVisible || !simpleui.MouseInViewport() {
-		return
+		return false
 	}
 	mouse := simpleui.MousePosition()
 	if mouse.X < x || mouse.X > x+w || mouse.Y < y+24 || mouse.Y > y+h-53 {
-		return
+		return false
 	}
 	low := p.screen.centerFrequencyHz - p.screen.spanHz/2
 	hovered := -1
@@ -1184,10 +1344,10 @@ func (p *MemoryPanel) DrawMarkerTooltip(x, y, w, h float32) {
 		}
 	}
 	if hovered < 0 {
-		return
+		return false
 	}
 	m := p.memories[hovered]
-	cardW, cardH := float32(270), float32(96)
+	cardW, cardH := float32(390), float32(142)
 	cardX := mouse.X + 16
 	if cardX+cardW > x+w-5 {
 		cardX = mouse.X - cardW - 16
@@ -1195,18 +1355,27 @@ func (p *MemoryPanel) DrawMarkerTooltip(x, y, w, h float32) {
 	cardX = min(max(cardX, x+52), x+w-cardW-5)
 	cardY := min(max(mouse.Y-cardH/2, y+31), y+h-cardH-58)
 	card := rl.Rectangle{X: cardX, Y: cardY, Width: cardW, Height: cardH}
-	rl.DrawRectangleRounded(card, .08, 5, rl.Color{R: 7, G: 13, B: 19, A: 248})
+	cardBackground := colors.panel
+	cardBackground.A = 250
+	rl.DrawRectangleRounded(card, .08, 5, cardBackground)
 	groupColor := p.groupColor(memoryGroup(m))
 	rl.DrawRectangleRoundedLinesEx(card, .08, 5, 2, groupColor)
-	simpleui.DrawTextStyled(trimMemory(m.Name, 28), cardX+12, cardY+9, 14, simpleui.FontSemiBold, colors.text)
-	simpleui.DrawTextStyled(fmt.Sprintf("%.6f MHz   %s", float64(m.FrequencyHz)/1e6, m.Mode), cardX+12, cardY+34, 12, simpleui.FontMono, groupColor)
+	mainText := simpleui.EnsureTextContrast(colors.text, cardBackground)
+	accentText := simpleui.EnsureTextContrast(groupColor, cardBackground)
+	simpleui.DrawTextStyled(trimMemory(m.Name, 30), cardX+14, cardY+10, 17, simpleui.FontSemiBold, mainText)
+	simpleui.DrawTextStyled(fmt.Sprintf("%.6f MHz   %s", float64(m.FrequencyHz)/1e6, m.Mode), cardX+14, cardY+39, 15, simpleui.FontMono, accentText)
 	detail := fmt.Sprintf("FILTRO %s   STEP %s", formatFilterBandwidth(m.FilterBandwidthHz), formatStep(m.StepHz))
 	if m.CTCSSHz != "" {
 		detail += "   CTCSS " + m.CTCSSHz
 	} else if m.DCSCode != "" {
 		detail += "   DCS " + m.DCSCode
 	}
-	simpleui.DrawTextStyled(detail, cardX+12, cardY+56, 11, simpleui.FontRegular, colors.text)
+	simpleui.DrawTextStyled(detail, cardX+14, cardY+66, 13, simpleui.FontRegular, mainText)
+	description := strings.TrimSpace(m.Description)
+	if description == "" {
+		description = "Sin descripción"
+	}
+	simpleui.DrawTextStyled(trimMemory(description, 51), cardX+14, cardY+91, 13, simpleui.FontRegular, mainText)
 	status := "SCAN INACTIVO"
 	if m.ScanEnabled {
 		status = "SCAN ACTIVO"
@@ -1215,7 +1384,8 @@ func (p *MemoryPanel) DrawMarkerTooltip(x, y, w, h float32) {
 	if m.Priority {
 		priority = "  ·  PRIORITARIA"
 	}
-	simpleui.DrawTextStyled(memoryGroup(m)+"  ·  "+status+priority, cardX+12, cardY+76, 10, simpleui.FontRegular, groupColor)
+	simpleui.DrawTextStyled(memoryGroup(m)+"  ·  "+status+priority, cardX+14, cardY+118, 12, simpleui.FontSemiBold, accentText)
+	return true
 }
 
 func (p *MemoryPanel) visibleMarkerIndices() []int {

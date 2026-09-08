@@ -101,9 +101,9 @@ func (menu *ToolMenu) DrawOverlay() {
 	menu.loadIcons()
 	rl.DrawRectangle(0, 0, int32(designWidth), int32(designHeight), rl.Color{A: 218})
 	modal := rl.Rectangle{X: 190, Y: 55, Width: 900, Height: 730}
-	rl.DrawRectangleRounded(modal, .018, 8, rl.Color{R: 12, G: 14, B: 18, A: 255})
-	rl.DrawRectangleRoundedLinesEx(modal, .018, 8, 2, rl.Color{R: 82, G: 92, B: 105, A: 255})
-	rl.DrawRectangle(192, 57, 896, 55, rl.Color{R: 31, G: 34, B: 39, A: 255})
+	rl.DrawRectangleRounded(modal, .018, 8, colors.panel)
+	rl.DrawRectangleRoundedLinesEx(modal, .018, 8, 2, colors.border)
+	rl.DrawRectangle(192, 57, 896, 55, colors.panelAlt)
 	simpleui.DrawTextStyled("MENU", 592, 71, 22, simpleui.FontSemiBold, colors.text)
 	rl.DrawLine(210, 112, 1070, 112, rl.Color{R: 75, G: 75, B: 75, A: 255})
 
@@ -113,13 +113,13 @@ func (menu *ToolMenu) DrawOverlay() {
 		menu.drawItem(index)
 	}
 	back := menu.backBounds()
-	backColor := rl.Color{R: 50, G: 55, B: 64, A: 255}
+	backColor := colors.panelAlt
 	if menu.pressedBack {
-		backColor = rl.Color{R: 75, G: 88, B: 102, A: 255}
+		backColor = mixColor(colors.panelAlt, colors.cyan, .18)
 	}
 	rl.DrawRectangleRounded(back, .2, 8, backColor)
 	rl.DrawRectangleRoundedLinesEx(back, .2, 8, 2, rl.Color{R: 130, G: 145, B: 160, A: 255})
-	drawCentered("VOLVER", back, 15, colors.text)
+	drawCentered("VOLVER", back, 15, simpleui.EnsureTextContrast(colors.text, backColor))
 }
 
 func (menu *ToolMenu) drawCategory(row int, label string, accent rl.Color) {
@@ -133,7 +133,7 @@ func (menu *ToolMenu) drawItem(index int) {
 	bounds := menu.itemBounds(index)
 	active := item.id == menu.selected
 	accent := menu.rowAccent(item.row)
-	fill := rl.Color{R: 35, G: 37, B: 40, A: 255}
+	fill := colors.panelAlt
 	if active {
 		fill = blendRGBA(fill, accent, .20)
 	}
@@ -155,7 +155,7 @@ func (menu *ToolMenu) drawItem(index int) {
 	} else {
 		menu.drawCustomIcon(item.id, center, active)
 	}
-	textColor := colors.text
+	textColor := simpleui.EnsureTextContrast(colors.text, fill)
 	if active {
 		textColor = accent
 	}

@@ -49,7 +49,7 @@ func NewTETRAPanel(screen *MainScreen) *TETRAPanel {
 		p.controls = append(p.controls, b)
 		return b
 	}
-	p.start = button("tetraStart", "INICIAR", 344, 110, func() { p.enabled = !p.enabled; p.apply() })
+	p.start = button("tetraStart", "INICIAR", 360, 94, func() { p.enabled = !p.enabled; p.apply() })
 	clear := button("tetraClear", "LIMPIAR", 462, 95, func() {
 		if screen.receiver != nil {
 			screen.receiver.ClearTETRA()
@@ -359,7 +359,7 @@ func (p *TETRAPanel) DrawPanel() {
 	if p.screen.receiver != nil {
 		status = p.screen.receiver.TETRAStatus()
 	}
-	simpleui.DrawTextStyled("TETRA · π/4-DQPSK · 25 kHz", 344, toolY+7, 14, simpleui.FontSemiBold, colors.cyan)
+	simpleui.DrawTextStyled("TETRA · π/4-DQPSK · 25 kHz", toolContentX, toolY+7, 14, simpleui.FontSemiBold, colors.cyan)
 	simpleui.DrawTextStyled("ESTADO AUDIO", 1120, toolY+76, 12, simpleui.FontSemiBold, colors.muted)
 	for i, encrypted := range status.SlotEncrypted {
 		x := float32(1139 + i*39)
@@ -389,17 +389,17 @@ func (p *TETRAPanel) DrawPanel() {
 	}
 	// Draw each live value in its own fixed column. A single formatted string
 	// shifts every field whenever a signed value gains or loses a digit.
-	drawTETRAStatusField("ESTADO", status.State, 344, toolY+72, 201)
+	drawTETRAStatusField("ESTADO", status.State, toolContentX, toolY+72, 185)
 	drawTETRAStatusField("NIVEL", fmt.Sprintf("%6.1f dBFS", status.LevelDBFS), 555, toolY+72, 125)
 	drawTETRAStatusField("CALIDAD", fmt.Sprintf("%3.0f %%", status.Quality), 690, toolY+72, 115)
 	drawTETRAStatusField("AFC", fmt.Sprintf("%+6.0f Hz", status.FrequencyErrorHz), 815, toolY+72, 120)
 	drawTETRAStatusField("CENTRO", fmt.Sprintf("%+6.0f Hz", p.centerError), 945, toolY+72, 145)
-	simpleui.DrawText(fmt.Sprintf("18 ksym/s · BER %5.2f%% · FER %5.1f%% · SYNC %d · NTS %d · AACH %d/%d · SCH %d/%d · MAC %d · CMCE %d", status.BER, status.FER, status.SyncHits, status.NormalBursts, status.AACHValid, status.AACHRejected, status.SCHValid, status.SCHCRCFailures, status.MACResources, status.CMCEEvents), 344, toolY+99, 13, colors.muted)
+	simpleui.DrawText(fmt.Sprintf("18 ksym/s · BER %5.2f%% · FER %5.1f%% · SYNC %d · NTS %d · AACH %d/%d · SCH %d/%d · MAC %d · CMCE %d", status.BER, status.FER, status.SyncHits, status.NormalBursts, status.AACHValid, status.AACHRejected, status.SCHValid, status.SCHCRCFailures, status.MACResources, status.CMCEEvents), toolContentX, toolY+99, 13, colors.muted)
 	if !status.LastSync.IsZero() {
-		simpleui.DrawText("ÚLTIMA SINCRONÍA  "+status.LastSync.Format("15:04:05"), 344, toolY+124, 13, colors.green)
+		simpleui.DrawText("ÚLTIMA SINCRONÍA  "+status.LastSync.Format("15:04:05"), toolContentX, toolY+124, 13, colors.green)
 	}
 	if status.System.Valid {
-		simpleui.DrawText(fmt.Sprintf("RED  MCC %d · MNC %d · COLOR %d · TS %d · FN %d · MF %d", status.System.MCC, status.System.MNC, status.System.ColourCode, status.System.Timeslot, status.System.Frame, status.System.Multiframe), 344, toolY+148, 13, colors.green)
+		simpleui.DrawText(fmt.Sprintf("RED  MCC %d · MNC %d · COLOR %d · TS %d · FN %d · MF %d", status.System.MCC, status.System.MNC, status.System.ColourCode, status.System.Timeslot, status.System.Frame, status.System.Multiframe), toolContentX, toolY+148, 13, colors.green)
 	}
 	constellation := rl.Rectangle{X: 1310, Y: toolY + 72, Width: 150, Height: 108}
 	rl.DrawRectangleRec(constellation, colors.background)
@@ -415,7 +415,7 @@ func (p *TETRAPanel) DrawPanel() {
 	if msg == "" {
 		msg = "Selecciona la subbanda y ajusta el canal en pasos de 25 kHz"
 	}
-	simpleui.DrawText(msg, 344, toolY+174, 12, colors.muted)
+	simpleui.DrawText(msg, toolContentX, toolY+174, 12, colors.muted)
 }
 
 func drawTETRAStatusField(label, value string, x, y, width float32) {

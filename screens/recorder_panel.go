@@ -174,7 +174,7 @@ func (p *RecorderPanel) DrawOverlay() {
 	}
 	rl.DrawRectangle(0, 0, int32(designWidth), int32(designHeight), rl.Color{A: 220})
 	modal := rl.Rectangle{X: 470, Y: 300, Width: 660, Height: 250}
-	rl.DrawRectangleRounded(modal, .04, 8, rl.Color{R: 13, G: 17, B: 23, A: 255})
+	rl.DrawRectangleRounded(modal, .04, 8, colors.panel)
 	rl.DrawRectangleRoundedLinesEx(modal, .04, 8, 2, colors.red)
 	drawCentered("ELIMINAR GRABACIÓN", rl.Rectangle{X: 490, Y: 325, Width: 620, Height: 30}, 22, colors.red)
 	drawCentered(trimMemory(filepath.Base(p.deleteCandidate), 72), rl.Rectangle{X: 505, Y: 380, Width: 590, Height: 28}, 14, colors.text)
@@ -201,7 +201,7 @@ func (p *RecorderPanel) drawModalButton(bounds rl.Rectangle, label string, press
 	}
 	rl.DrawRectangleRounded(bounds, .15, 6, background)
 	rl.DrawRectangleRoundedLinesEx(bounds, .15, 6, 2, border)
-	drawCentered(label, bounds, uiControlFontSize, colors.text)
+	drawCentered(label, bounds, uiControlFontSize, simpleui.EnsureTextContrast(colors.text, background))
 }
 
 func (p *RecorderPanel) DrawSidebar() {

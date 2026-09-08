@@ -253,13 +253,14 @@ func (d *Decoder) start(forceCandidates bool) error {
 		d.mu.Unlock()
 		return err
 	}
-	args := []string{"--stream", "--sample-rate", "48000", "--output", d.outputFolder, "--weak", "--candidate-modes", strings.Join(d.candidateModes[:], ",")}
+	// Keep the automatic primary decoder and the manual candidates running
+	// together. The UI exposes RX1 as AUTO and RX2-RX4 as independently
+	// selectable manual decoders.
+	args := []string{"--stream", "--sample-rate", "48000", "--output", d.outputFolder, "--weak", "--candidate-modes", strings.Join(d.candidateModes[:], ","), "--force-candidates"}
 	if !d.automatic {
 		args = append(args, "--forced-mode", d.selectedMode)
 	}
-	if forceCandidates {
-		args = append(args, "--force-candidates")
-	}
+	_ = forceCandidates
 	cmd := exec.Command(executable, args...)
 	cmd.Dir = filepath.Dir(executable)
 	cmd.SysProcAttr = hiddenProcessAttributes()

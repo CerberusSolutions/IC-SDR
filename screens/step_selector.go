@@ -9,7 +9,7 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
-var tuningStepsHz = []int64{1, 10, 100, 1_000, 5_000, 6_250, 10_000, 12_500, 25_000, 100_000}
+var tuningStepsHz = []int64{1, 10, 100, 1_000, 5_000, 6_250, 8_330, 10_000, 12_500, 25_000, 100_000}
 
 // StepSelector provides direct access to every tuning raster supported by IC-SDR.
 type StepSelector struct {
@@ -72,13 +72,13 @@ func (selector *StepSelector) DrawOverlay() {
 	}
 	rl.DrawRectangle(0, 0, int32(designWidth), int32(designHeight), rl.Color{A: 200})
 	panel := rl.Rectangle{X: 430, Y: 170, Width: 740, Height: 360}
-	rl.DrawRectangleRounded(panel, .03, 8, rl.Color{R: 24, G: 27, B: 35, A: 255})
+	rl.DrawRectangleRounded(panel, .03, 8, colors.panel)
 	rl.DrawRectangleRoundedLinesEx(panel, .03, 8, 2, colors.blue)
 	rl.DrawRectangleRounded(rl.Rectangle{X: 430, Y: 170, Width: 10, Height: 360}, .5, 8, colors.blue)
 	drawCentered("SELECCIONAR STEP", rl.Rectangle{X: 470, Y: 195, Width: 660, Height: 44}, 25, colors.text)
 	for index, step := range tuningStepsHz {
 		bounds := selector.stepBounds(index)
-		fill := rl.Color{R: 55, G: 60, B: 70, A: 255}
+		fill := colors.panelAlt
 		border := colors.border
 		if step == selector.selected {
 			fill = colors.blue
@@ -88,7 +88,7 @@ func (selector *StepSelector) DrawOverlay() {
 		}
 		rl.DrawRectangleRounded(bounds, .12, 8, fill)
 		rl.DrawRectangleRoundedLinesEx(bounds, .12, 8, 2, border)
-		drawCentered(formatStep(step), bounds, 16, colors.text)
+		drawCentered(formatStep(step), bounds, 16, simpleui.EnsureTextContrast(colors.text, fill))
 	}
 	selector.close.Draw()
 }

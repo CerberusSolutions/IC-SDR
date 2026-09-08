@@ -318,10 +318,12 @@ func drawScanButton(x, y, w, h float32, title, detail string, background rl.Colo
 	bounds := rl.Rectangle{X: x, Y: y, Width: w, Height: h}
 	rl.DrawRectangleRounded(bounds, .12, 7, background)
 	rl.DrawRectangleRoundedLinesEx(bounds, .12, 7, 1.5, colors.cyan)
+	titleColor := simpleui.EnsureTextContrast(colors.text, background)
+	detailColor := simpleui.EnsureTextContrast(colors.muted, background)
 	titleSize := simpleui.MeasureTextStyled(title, 14, simpleui.FontSemiBold)
 	detailSize := simpleui.MeasureTextStyled(detail, 12, simpleui.FontRegular)
-	simpleui.DrawTextStyled(title, x+(w-titleSize.X)/2, y+9, 14, simpleui.FontSemiBold, colors.text)
-	simpleui.DrawTextStyled(detail, x+(w-detailSize.X)/2, y+33, 12, simpleui.FontRegular, rl.Color{R: 200, G: 215, B: 222, A: 255})
+	simpleui.DrawTextStyled(title, x+(w-titleSize.X)/2, y+9, 14, simpleui.FontSemiBold, titleColor)
+	simpleui.DrawTextStyled(detail, x+(w-detailSize.X)/2, y+33, 12, simpleui.FontRegular, detailColor)
 }
 
 func (p *ScanPanel) updateInput() {

@@ -63,7 +63,7 @@ func (button *Button) Draw() {
 	borderColor := theme.Border
 	textColor := theme.Text
 	if button.customColors {
-		color, borderColor, textColor = button.background, button.border, button.textColor
+		color, borderColor, textColor = themedColor(button.background), themedColor(button.border), themedColor(button.textColor)
 	}
 	if !button.Enabled() {
 		color = theme.ControlDisabled
@@ -79,6 +79,9 @@ func (button *Button) Draw() {
 		} else {
 			color = theme.ControlHover
 		}
+	}
+	if button.customColors && button.Enabled() {
+		textColor = EnsureTextContrast(textColor, color)
 	}
 
 	bounds := button.Bounds()

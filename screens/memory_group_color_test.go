@@ -41,3 +41,19 @@ func TestCreateEmptyMemoryGroupPersists(t *testing.T) {
 		t.Fatalf("empty group did not survive reload: %+v", loaded.groups)
 	}
 }
+
+func TestEditGroupRenamesAndAppliesSharedFlags(t *testing.T) {
+	dir := t.TempDir()
+	panel := &MemoryPanel{
+		memories:    []MemoryEntry{{Name: "A", Group: "OLD"}, {Name: "B", Group: "OLD", Priority: true}},
+		groupColors: map[string]string{"OLD": "#000000"}, groupColorsPath: filepath.Join(dir, "groups.json"), path: filepath.Join(dir, "memories.json"),
+		selectedGroup: "OLD", pendingOriginalGroup: "OLD", pendingGroup: "NEW", pendingGroupColor: 2, pendingGroupScan: true,
+	}
+	panel.commitGroupColor()
+	if panel.selectedGroup != "NEW" || panel.memories[0].Group != "NEW" || panel.memories[1].Group != "NEW" || !panel.memories[0].ScanEnabled || panel.memories[1].Priority {
+		t.Fatalf("group edit was not applied: %+v", panel)
+	}
+	if _, old := panel.groupColors["OLD"]; old || panel.groupColor("NEW") != memoryGroupPalette[2] {
+		t.Fatalf("group color was not moved: %+v", panel.groupColors)
+	}
+}

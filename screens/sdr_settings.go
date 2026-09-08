@@ -134,8 +134,8 @@ func (modal *SDRSettings) DrawOverlay() {
 	}
 	rl.DrawRectangle(0, 0, int32(designWidth), int32(designHeight), rl.Color{A: 205})
 	panel := rl.Rectangle{X: 420, Y: 100, Width: 760, Height: 550}
-	rl.DrawRectangleRounded(panel, .025, 8, rl.Color{R: 24, G: 27, B: 35, A: 255})
-	rl.DrawRectangleRoundedLinesEx(panel, .025, 8, 2, rl.Color{R: 95, G: 110, B: 135, A: 255})
+	rl.DrawRectangleRounded(panel, .025, 8, colors.panel)
+	rl.DrawRectangleRoundedLinesEx(panel, .025, 8, 2, colors.border)
 	rl.DrawRectangleRounded(rl.Rectangle{X: 420, Y: 100, Width: 10, Height: 550}, .5, 8, colors.blue)
 	drawCentered("CONFIGURACIÓN SDR", rl.Rectangle{X: 460, Y: 116, Width: 680, Height: 38}, 25, colors.text)
 	rl.DrawLineEx(rl.Vector2{X: 465, Y: 195}, rl.Vector2{X: 1135, Y: 195}, 2, colors.border)

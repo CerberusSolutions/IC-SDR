@@ -43,7 +43,7 @@ func NewAudioPanel(screen *MainScreen) *AudioPanel {
 	p.pbtRange.SetMinimumGap(200)
 	p.pbtRange.SetRangeDragging(false)
 	p.pbtRange.OnChange(func(low, high float32) { p.pbtLow, p.pbtHigh = int(low), int(high); p.applyPBT() })
-	p.pbtLock = simpleui.NewSwitch("pbtLock", 42, 768, 100, 26, "LOCK", false, 12)
+	p.pbtLock = simpleui.NewSwitch("pbtLock", 42, 782, 104, 26, "LOCK", false, 11)
 	p.pbtLock.OnChange(func(active bool) {
 		p.pbtLocked = active
 		if active {
@@ -52,12 +52,12 @@ func NewAudioPanel(screen *MainScreen) *AudioPanel {
 			p.pbtLock.SetLabel("LOCK OFF")
 		}
 	})
-	p.pbtClear = simpleui.NewButton("pbtClear", 150, 768, 88, 26, "CLEAR", 12)
+	p.pbtClear = simpleui.NewButton("pbtClear", 154, 782, 92, 26, "CLEAR", 11)
 	p.pbtClear.OnClick(func() {
 		p.pbtLow, p.pbtHigh = 100, min(max(p.screen.demodBandwidthHz, 300), 5000)
 		p.applyPBT()
 	})
-	p.pbtBypass = simpleui.NewButton("pbtBypass", 246, 768, 112, 26, "BYPASS", 12)
+	p.pbtBypass = simpleui.NewButton("pbtBypass", 254, 782, 118, 26, "BYPASS", 11)
 	p.pbtBypass.OnClick(func() {
 		p.pbtBypassed = !p.pbtBypassed
 		if p.pbtBypassed {
@@ -68,13 +68,13 @@ func NewAudioPanel(screen *MainScreen) *AudioPanel {
 		p.applyPBT()
 	})
 
-	p.eqSwitch = simpleui.NewSwitch("audioEQ", 654, 648, 68, 24, "EQ", true, 12)
+	p.eqSwitch = simpleui.NewSwitch("audioEQ", 676, 649, 66, 24, "EQ", true, 11)
 	p.eqSwitch.OnChange(func(active bool) {
 		p.eqEnabled = active
 		p.eqSwitch.SetLabel(map[bool]string{true: "EQ ON", false: "EQ OFF"}[active])
 		p.apply()
 	})
-	flat := simpleui.NewButton("audioEQFlat", 730, 648, 58, 24, "FLAT", 12)
+	flat := simpleui.NewButton("audioEQFlat", 744, 649, 48, 24, "FLAT", 10)
 	flat.OnClick(func() {
 		for i := range p.eqGains {
 			p.eqGains[i] = 0
@@ -83,8 +83,8 @@ func NewAudioPanel(screen *MainScreen) *AudioPanel {
 		p.apply()
 	})
 	for i := range p.eqSliders {
-		x := float32(468 + i*58)
-		slider := simpleui.NewSlider(fmt.Sprintf("audioEQ%d", i), x, 684, 16, 76, -12, 12, 0)
+		x := float32(506 + i*53)
+		slider := simpleui.NewSlider(fmt.Sprintf("audioEQ%d", i), x, 702, 16, 68, -12, 12, 0)
 		slider.SetOrientation(simpleui.Vertical)
 		slider.SetStep(.5)
 		band := i
@@ -96,9 +96,9 @@ func NewAudioPanel(screen *MainScreen) *AudioPanel {
 	p.cutoffs.SetMinimumGap(200)
 	p.cutoffs.SetRangeDragging(false)
 	p.cutoffs.OnChange(func(low, high float32) { p.lowCut, p.highCut = max(int(low), 20), min(int(high), 16000); p.apply() })
-	p.profileButton = simpleui.NewButton("audioProfile", 818, 772, 150, 28, "COMPRESOR NORMAL", 11)
+	p.profileButton = simpleui.NewButton("audioProfile", 818, 778, 176, 30, "COMP. NORMAL", 11)
 	p.profileButton.OnClick(p.cycleProfile)
-	p.deemphasisButton = simpleui.NewButton("audioDeemphasis", 978, 772, 150, 28, "DE-EMPH 50 us", 11)
+	p.deemphasisButton = simpleui.NewButton("audioDeemphasis", 1004, 778, 156, 30, "DE-EMPH 50 us", 11)
 	p.deemphasisButton.OnClick(func() {
 		if p.deemphasisUs == 50 {
 			p.deemphasisUs = 75
@@ -107,7 +107,7 @@ func NewAudioPanel(screen *MainScreen) *AudioPanel {
 		}
 		p.apply()
 	})
-	reset := simpleui.NewButton("audioReset", 1164, 648, 72, 24, "RESET", 11)
+	reset := simpleui.NewButton("audioReset", 1458, 648, 94, 25, "RESET", 10)
 	reset.OnClick(func() { p.lowCut, p.highCut = 100, 4000; p.cutoffs.SetValues(100, 4000); p.apply() })
 	p.controls = []simpleui.Element{p.pbtLock, p.pbtClear, p.pbtBypass, p.eqSwitch, flat, p.profileButton, p.deemphasisButton, reset}
 	for _, slider := range p.eqSliders {
@@ -145,7 +145,7 @@ func (p *AudioPanel) apply() {
 	if p.screen.receiver != nil {
 		p.screen.receiver.SetFMDeemphasis(p.deemphasisUs)
 	}
-	p.profileButton.SetLabel("COMPRESOR " + p.profile)
+	p.profileButton.SetLabel("COMP. " + p.profile)
 	p.deemphasisButton.SetLabel(fmt.Sprintf("DE-EMPH %d us", p.deemphasisUs))
 }
 
@@ -168,33 +168,33 @@ func (p *AudioPanel) DrawPanel() {
 	p.pbtClear.SetEnabled(ssb)
 	p.pbtBypass.SetEnabled(ssb)
 	drawCentered("TWIN PBT", rl.Rectangle{X: 30, Y: 634, Width: 410, Height: 24}, 13, colors.text)
-	drawPanel(448, 642, 348, 174)
+	drawPanel(470, 642, 326, 174)
 	drawPanel(808, 642, 756, 174)
-	drawSmallText("5-BAND EQ", 460, 650, colors.text)
+	drawSmallText("5-BAND EQ", 482, 650, colors.text)
 	drawSmallText("AUDIO SPECTRUM", 818, 650, colors.text)
 	p.drawPBT(ssb, mode)
 	for i, hz := range audioEQFrequencies {
-		x := float32(476 + i*58)
-		drawSmallText(fmt.Sprintf("%+.1f", p.eqGains[i]), x-10, 672, colors.cyan)
+		x := float32(514 + i*53)
+		drawSmallText(fmt.Sprintf("%+.1f", p.eqGains[i]), x-10, 684, colors.cyan)
 		label := fmt.Sprintf("%.0f", hz)
 		if hz >= 1000 {
 			label = fmt.Sprintf("%.1fk", hz/1000)
 		}
-		drawSmallText(label, x-10, 764, colors.muted)
+		drawSmallText(label, x-10, 782, colors.muted)
 	}
-	drawSmallText("+12", 452, 684, colors.muted)
-	drawSmallText("0", 456, 719, colors.muted)
-	drawSmallText("-12", 452, 751, colors.muted)
-	p.drawSpectrum(818, 676, 736, 76, 12000)
-	drawSmallText(fmt.Sprintf("LOW CUT %s", formatAudioHz(p.lowCut)), 822, 665, colors.cyan)
-	drawSmallText(fmt.Sprintf("HIGH CUT %s", formatAudioHz(p.highCut)), 980, 665, colors.orange)
-	drawSmallText(fmt.Sprintf("BUFFER %d ms | %.0f%%", p.screen.stats.AudioBuffered*1000/audioSampleRate, float32(p.screen.stats.AudioBuffered)*100/48000), 940, 650, colors.muted)
-	drawSmallText(fmt.Sprintf("OVERRUNS %d", p.screen.stats.AudioOverruns), 1085, 650, colors.muted)
-	drawSmallText(fmt.Sprintf("AF BW  %s", formatAudioHz(p.highCut-p.lowCut)), 1440, 782, colors.text)
+	drawSmallText("+12", 476, 704, colors.muted)
+	drawSmallText("0", 480, 733, colors.muted)
+	drawSmallText("-12", 476, 762, colors.muted)
+	p.drawSpectrum(818, 690, 736, 74, 12000)
+	drawSmallText(fmt.Sprintf("LOW %s", formatAudioHz(p.lowCut)), 822, 670, colors.cyan)
+	drawSmallText(fmt.Sprintf("HIGH %s", formatAudioHz(p.highCut)), 952, 670, colors.orange)
+	drawSmallText(fmt.Sprintf("BUFFER %d ms · %.0f%%", p.screen.stats.AudioBuffered*1000/audioSampleRate, float32(p.screen.stats.AudioBuffered)*100/48000), 1045, 650, colors.muted)
+	drawSmallText(fmt.Sprintf("OVERRUNS %d", p.screen.stats.AudioOverruns), 1260, 650, colors.muted)
+	drawSmallText(fmt.Sprintf("AF BW  %s", formatAudioHz(p.highCut-p.lowCut)), 1422, 786, colors.text)
 }
 
 func (p *AudioPanel) drawPBT(enabled bool, mode string) {
-	x, y, w, h := float32(42), float32(668), float32(390), float32(82)
+	x, y, w, h := float32(42), float32(670), float32(390), float32(80)
 	drawPanel(x, y, w, h)
 	drawGrid(x, y, w, h, 8, 4)
 	center := x + w/2
@@ -216,14 +216,8 @@ func (p *AudioPanel) drawPBT(enabled bool, mode string) {
 	p.drawPBTResponse(x, y, w, h, mode, 50, p.pbtHigh, colors.orange)
 	rl.DrawLineEx(rl.Vector2{X: lowX, Y: y}, rl.Vector2{X: lowX, Y: y + h}, 2, colors.cyan)
 	rl.DrawLineEx(rl.Vector2{X: highX, Y: y}, rl.Vector2{X: highX, Y: y + h}, 2, colors.orange)
-	drawSmallText(fmt.Sprintf("PBT1 %d Hz", p.pbtLow), 190, 656, colors.cyan)
-	drawSmallText(fmt.Sprintf("PBT2 %d Hz", p.pbtHigh), 335, 656, colors.orange)
-	signValue := 1
-	if mode == "LSB" {
-		signValue = -1
-	}
-	drawSmallText(fmt.Sprintf("LOW %+d  HIGH %+d", signValue*p.pbtLow, signValue*p.pbtHigh), 346, 770, colors.text)
-	drawSmallText(fmt.Sprintf("WIDTH %d  SHIFT %+d", p.pbtHigh-p.pbtLow, signValue*(p.pbtHigh+p.pbtLow)/2), 346, 785, colors.text)
+	drawSmallText(fmt.Sprintf("PBT1 %d Hz", p.pbtLow), 208, 650, colors.cyan)
+	drawSmallText(fmt.Sprintf("PBT2 %d Hz", p.pbtHigh), 330, 650, colors.orange)
 	drawSmallText("-5 kHz", x, y+h+2, colors.muted)
 	drawSmallText("0", center-3, y+h+2, colors.muted)
 	drawSmallText("+5 kHz", x+w-34, y+h+2, colors.muted)
@@ -303,7 +297,7 @@ func (p *AudioPanel) handleGraphInput() {
 		}
 		p.applyPBT()
 	}
-	if pressed && mouse.X >= 818 && mouse.X <= 1554 && mouse.Y >= 660 && mouse.Y <= 752 {
+	if pressed && mouse.X >= 818 && mouse.X <= 1554 && mouse.Y >= 684 && mouse.Y <= 764 {
 		lowX := 818 + 736*float32(p.lowCut)/12000
 		highX := 818 + 736*float32(p.highCut)/12000
 		if math.Abs(float64(mouse.X-lowX)) <= 16 {

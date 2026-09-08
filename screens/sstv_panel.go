@@ -27,8 +27,7 @@ type sstvPreview struct {
 type SSTVPanel struct {
 	screen         *MainScreen
 	controls       []simpleui.Element
-	mode           *simpleui.Dropdown
-	candidateModes [4]*simpleui.Dropdown
+	candidateModes [3]*simpleui.Dropdown
 	auto, force    *simpleui.Button
 	stop, restart  *simpleui.Button
 	save, folder   *simpleui.Button
@@ -40,22 +39,10 @@ type SSTVPanel struct {
 
 func NewSSTVPanel(screen *MainScreen) *SSTVPanel {
 	p := &SSTVPanel{screen: screen}
-	p.mode = simpleui.NewDropdown("sstvMode", 1006, 657, 150, 36, "MODO MANUAL", sstv.ValidModes, uiControlFontSize)
-	p.mode.SetSelected(sstvModeIndex(screen.sstvMode))
-	p.mode.OnChange(func(_ int, mode string) {
-		screen.sstvMode = mode
-		screen.sstvAutomatic = false
-		if screen.receiver != nil {
-			screen.receiver.SetSSTVMode(mode)
-			screen.receiver.SetSSTVAutomatic(false)
-		}
-		p.flash("Modo manual " + mode)
-		screen.markSettingsDirty()
-	})
 	for i := range p.candidateModes {
 		i := i
-		x := float32(40 + i*238)
-		p.candidateModes[i] = simpleui.NewDropdown(fmt.Sprintf("sstvCandidate%d", i), x, toolY+34, 226, 28, "MODO", sstv.ValidModes, uiMinimumFontSize)
+		x := float32(40 + (i+1)*238)
+		p.candidateModes[i] = simpleui.NewDropdown(fmt.Sprintf("sstvCandidate%d", i), x+44, toolY+34, 182, 28, "MODO", sstv.ValidModes, uiMinimumFontSize)
 		p.candidateModes[i].SetSelected(sstvModeIndex(screen.sstvCandidateModes[i]))
 		p.candidateModes[i].SetMaxVisibleItems(5)
 		p.candidateModes[i].OnChange(func(_ int, mode string) {
@@ -117,7 +104,7 @@ func NewSSTVPanel(screen *MainScreen) *SSTVPanel {
 		}
 		_ = exec.Command("explorer.exe", screen.receiver.SSTVOutputFolder()).Start()
 	})
-	p.controls = []simpleui.Element{p.mode, p.auto, p.force, p.stop, p.restart, p.save, p.folder}
+	p.controls = []simpleui.Element{p.auto, p.force, p.stop, p.restart, p.save, p.folder}
 	for _, dropdown := range p.candidateModes {
 		p.controls = append(p.controls, dropdown)
 	}
@@ -145,9 +132,9 @@ func (p *SSTVPanel) Enter() {
 		return
 	}
 	p.screen.receiver.ConfigureSSTV(true)
-	p.screen.receiver.SetSSTVMode(p.screen.sstvMode)
-	p.screen.receiver.SetSSTVAutomatic(p.screen.sstvAutomatic)
-	for i, mode := range p.screen.sstvCandidateModes {
+	p.screen.sstvAutomatic = true
+	p.screen.receiver.SetSSTVAutomatic(true)
+	for i, mode := range p.screen.sstvCandidateModes[:len(p.candidateModes)] {
 		p.screen.receiver.SetSSTVCandidateMode(i, mode)
 	}
 }
@@ -163,7 +150,7 @@ func (p *SSTVPanel) SetVisible(visible bool) {
 		control.SetVisible(visible)
 	}
 	for _, dropdown := range p.candidateModes {
-		dropdown.SetVisible(visible && p.status.Candidates)
+		dropdown.SetVisible(visible)
 	}
 }
 
@@ -173,7 +160,7 @@ func (p *SSTVPanel) Tick() {
 	}
 	p.status = p.screen.receiver.SSTVStatus()
 	for _, dropdown := range p.candidateModes {
-		dropdown.SetVisible(p.status.Candidates)
+		dropdown.SetVisible(true)
 	}
 	for channel := range p.previews {
 		frame, changed := p.screen.receiver.SSTVFrame(channel, p.previews[channel].sequence)
@@ -214,8 +201,10 @@ func (p *SSTVPanel) updatePreview(channel int, frame sstv.Frame) {
 func (p *SSTVPanel) DrawPanel() {
 	drawSmallText("SSTV · RECEPCIÓN DE IMÁGENES", 40, toolY+10, colors.cyan)
 	channels := []int{0, 1, 2, 3}
-	if p.status.Candidates {
-		channels = []int{1, 2, 3, 4}
+	p.drawAutomaticDecoderHeader()
+	for i := range p.candidateModes {
+		x := float32(40 + (i+1)*238)
+		simpleui.DrawTextStyled(fmt.Sprintf("RX%d", i+2), x+5, toolY+42, 12, simpleui.FontSemiBold, colors.cyan)
 	}
 	for i, channel := range channels {
 		p.drawPreview(i, channel)
@@ -247,25 +236,24 @@ func (p *SSTVPanel) displayMode() string {
 }
 
 func (p *SSTVPanel) drawPreview(slot, channel int) {
-	x, y, w, h := float32(40+slot*238), toolY+34, float32(226), float32(158)
+	x, y, w, h := float32(40+slot*238), toolY+66, float32(226), float32(126)
 	rl.DrawRectangleRec(rl.Rectangle{X: x, Y: y, Width: w, Height: h}, rl.Color{R: 3, G: 6, B: 9, A: 255})
 	rl.DrawRectangleLinesEx(rl.Rectangle{X: x, Y: y, Width: w, Height: h}, 1, colors.border)
 	preview := &p.previews[channel]
 	if preview.ready {
 		src := rl.Rectangle{X: 0, Y: 0, Width: float32(preview.width), Height: float32(preview.height)}
-		header := float32(22)
-		if p.status.Candidates {
-			header = 32
-		}
-		dst := fitRectangle(x+2, y+header, w-4, h-header-2, float32(preview.width), float32(preview.height))
+		dst := fitRectangle(x+2, y+2, w-4, h-4, float32(preview.width), float32(preview.height))
 		rl.DrawTexturePro(preview.texture, src, dst, rl.Vector2{}, 0, rl.White)
 	} else {
 		simpleui.DrawText("ESPERANDO IMAGEN", x+28, y+82, uiMinimumFontSize, colors.muted)
 	}
-	if !p.status.Candidates {
-		label := fmt.Sprintf("RX %d · %s · %d líneas", slot+1, p.channelMode(channel), preview.lines)
-		simpleui.DrawText(label, x+7, y+5, uiMinimumFontSize, colors.text)
-	}
+}
+
+func (p *SSTVPanel) drawAutomaticDecoderHeader() {
+	bounds := rl.Rectangle{X: 40, Y: toolY + 34, Width: 226, Height: 28}
+	rl.DrawRectangleRounded(bounds, .12, 6, colors.panelAlt)
+	rl.DrawRectangleRoundedLinesEx(bounds, .12, 6, 1, colors.cyan)
+	drawCentered("RX1 · AUTO VIS", bounds, uiMinimumFontSize, colors.cyan)
 }
 
 func fitRectangle(x, y, w, h, sourceW, sourceH float32) rl.Rectangle {

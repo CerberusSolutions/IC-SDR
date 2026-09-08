@@ -2,6 +2,8 @@
 
 **SDR multimodo para Windows, programado en Go para ofrecer la máxima eficiencia.**
 
+**Versión actual: [v0.2.1](https://github.com/LuislopezMartinez/IC-SDR/releases/tag/v0.2.1)**
+
 IC-SDR reúne recepción, demodulación, análisis de espectro y decodificación de señales digitales en una interfaz de escritorio diseñada para el uso diario.
 
 > [!IMPORTANT]
@@ -34,6 +36,15 @@ IC-SDR integra herramientas para recibir y visualizar:
 - **TETRA** — recepción y análisis de señales TETRA.
 
 ![Decodificación RTL_433 en IC-SDR](docs/images/ic-sdr-rtl433.png)
+
+## Novedades de v0.2.1
+
+- Nuevos temas visuales y mejoras de contraste y legibilidad en toda la interfaz.
+- Gestión de memorias ampliada con descripciones, prioridades, colores y edición de grupos.
+- Nuevos presets para bandas aeronáuticas, marítimas e ISS/ARISS.
+- Mejoras en el modo SSTV automático y selección de modos candidatos.
+- Rediseño y ajustes de usabilidad en los paneles de audio, escáner, grabador y utilidades.
+- Nuevas pruebas para temas, contraste, memorias y SSTV.
 
 ## Windows y distribución portable
 

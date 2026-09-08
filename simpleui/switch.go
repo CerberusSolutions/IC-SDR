@@ -95,9 +95,9 @@ func (toggle *Switch) Draw() {
 		trackColor = theme.SwitchOn
 	}
 	if toggle.customColors {
-		trackColor = toggle.offColor
+		trackColor = themedColor(toggle.offColor)
 		if toggle.active {
-			trackColor = toggle.onColor
+			trackColor = themedColor(toggle.onColor)
 		}
 	}
 	if !toggle.Enabled() {

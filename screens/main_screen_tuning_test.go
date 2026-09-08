@@ -47,7 +47,8 @@ func TestTuneFixedAtFractionRoundsToNearestStep(t *testing.T) {
 }
 
 func TestViewGeometriesAndToolSelection(t *testing.T) {
-	screen := &MainScreen{viewMode: 2, activeTool: "FFT"}
+	screen := &MainScreen{viewMode: 2, activeTool: "FFT", draggingSpectrum: true}
+	screen.scanPanel = &ScanPanel{screen: screen, dragTarget: 2}
 	_, _, _, fftHeight := screen.spectrumGeometry()
 	_, waterfallY, _, waterfallHeight := screen.waterfallGeometry()
 	if fftHeight != 470 || waterfallY != 685 || waterfallHeight != 141 {
@@ -62,6 +63,9 @@ func TestViewGeometriesAndToolSelection(t *testing.T) {
 	screen.selectTool("PBT_AUDIO")
 	if screen.viewMode != 1 || screen.activeTool != "PBT_AUDIO" {
 		t.Fatalf("tool selection did not restore view 1: view=%d tool=%s", screen.viewMode, screen.activeTool)
+	}
+	if screen.draggingSpectrum || screen.scanPanel.dragTarget != 0 {
+		t.Fatal("tool selection left a stale spectrum gesture active")
 	}
 }
 

@@ -126,13 +126,13 @@ func (selector *FilterSelector) DrawOverlay() {
 	}
 	rl.DrawRectangle(0, 0, int32(designWidth), int32(designHeight), rl.Color{A: 200})
 	panel := rl.Rectangle{X: 410, Y: 150, Width: 780, Height: 530}
-	rl.DrawRectangleRounded(panel, .025, 8, rl.Color{R: 24, G: 27, B: 35, A: 255})
+	rl.DrawRectangleRounded(panel, .025, 8, colors.panel)
 	rl.DrawRectangleRoundedLinesEx(panel, .025, 8, 2, colors.blue)
 	rl.DrawRectangleRounded(rl.Rectangle{X: 410, Y: 150, Width: 10, Height: 530}, .5, 8, colors.blue)
 	drawCentered("FILTRO "+selector.mode, rl.Rectangle{X: 450, Y: 180, Width: 700, Height: 45}, 27, colors.text)
 	for index, preset := range filterCatalog[selector.mode] {
 		bounds := selector.presetBounds(index)
-		fill := rl.Color{R: 55, G: 60, B: 70, A: 255}
+		fill := colors.panelAlt
 		if selector.selected[selector.mode] == index {
 			fill = colors.blue
 		}
@@ -142,8 +142,9 @@ func (selector *FilterSelector) DrawOverlay() {
 		if index == 3 {
 			name = "FIL 4"
 		}
-		drawCentered(name, rl.Rectangle{X: bounds.X, Y: bounds.Y + 12, Width: bounds.Width, Height: 20}, 17, colors.text)
-		drawCentered(preset.Description, rl.Rectangle{X: bounds.X, Y: bounds.Y + 36, Width: bounds.Width, Height: 18}, 11, colors.text)
+		labelColor := simpleui.EnsureTextContrast(colors.text, fill)
+		drawCentered(name, rl.Rectangle{X: bounds.X, Y: bounds.Y + 12, Width: bounds.Width, Height: 20}, 17, labelColor)
+		drawCentered(preset.Description, rl.Rectangle{X: bounds.X, Y: bounds.Y + 36, Width: bounds.Width, Height: 18}, 11, labelColor)
 		drawCentered(formatFilterBandwidth(preset.BandwidthHz), rl.Rectangle{X: bounds.X, Y: bounds.Y + 58, Width: bounds.Width, Height: 18}, 14, colors.cyan)
 	}
 	drawCentered("CUSTOM permite ajustar y recordar un ancho para cada modo.", rl.Rectangle{X: 460, Y: 420, Width: 680, Height: 36}, 15, colors.text)

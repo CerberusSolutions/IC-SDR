@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"go-zero/internal/radiosonde"
@@ -17,6 +18,7 @@ type persistedAppSettings struct {
 	RadiosondeFamily      string                `json:"radiosondeFamily,omitempty"`
 	RadiosondeFrequencyHz int64                 `json:"radiosondeFrequencyHz,omitempty"`
 	Version               int                   `json:"version"`
+	Theme                 string                `json:"theme,omitempty"`
 	BandCategory          string                `json:"bandCategory"`
 	BandName              string                `json:"bandName"`
 	Mode                  string                `json:"mode"`
@@ -78,6 +80,9 @@ func loadAppSettings(path string, screen *MainScreen) {
 	var settings persistedAppSettings
 	if json.Unmarshal(data, &settings) != nil || settings.Version != appSettingsVersion {
 		return
+	}
+	if validTheme(settings.Theme) {
+		screen.themeName = strings.ToUpper(settings.Theme)
 	}
 	if validBand(settings.BandCategory, settings.BandName) {
 		screen.bandCategory = settings.BandCategory
@@ -238,6 +243,7 @@ func (screen *MainScreen) flushSettings(force bool) {
 	}
 	settings := persistedAppSettings{
 		Version:      appSettingsVersion,
+		Theme:        screen.themeName,
 		BandCategory: screen.bandCategory, BandName: screen.bandName,
 		Mode: mode, FrequencyHz: screen.frequencyHz, CenterFrequencyHz: screen.centerFrequencyHz,
 		SpanHz: screen.spanHz, TuningStepHz: screen.tuningStepHz, CenterMode: screen.centerMode,

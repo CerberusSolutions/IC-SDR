@@ -24,7 +24,7 @@ const (
 	legacyToolX       = float32(24)
 	legacyToolWidth   = float32(1552)
 	toolContentX      = utilitiesRight + 10
-	toolContentRight  = float32(1576)
+	toolContentRight  = float32(1592)
 )
 
 const toolContentScaleX = (toolContentRight - toolContentX) / legacyToolWidth
@@ -55,10 +55,12 @@ func drawCompactedTool(draw func()) {
 	rl.PopMatrix()
 }
 
-var colors = struct {
+type uiPalette struct {
 	background, panel, panelAlt, border, grid   rl.Color
 	cyan, blue, green, orange, red, text, muted rl.Color
-}{
+}
+
+var darkPalette = uiPalette{
 	background: rl.Color{R: 7, G: 10, B: 15, A: 255},
 	panel:      rl.Color{R: 10, G: 14, B: 19, A: 255},
 	panelAlt:   rl.Color{R: 14, G: 19, B: 26, A: 255},
@@ -72,6 +74,7 @@ var colors = struct {
 	text:       rl.Color{R: 225, G: 232, B: 238, A: 255},
 	muted:      rl.Color{R: 112, G: 130, B: 145, A: 255},
 }
+var colors = darkPalette
 
 // MainScreen is the visual shell of IC-SDR. DSP and hardware are deliberately
 // kept out of this first porting stage.
@@ -81,6 +84,8 @@ type MainScreen struct {
 	filter, band           *simpleui.Button
 	step                   *simpleui.Button
 	viewButton             *simpleui.Button
+	themeButton            *simpleui.Button
+	themeName              string
 	filterSelector         *FilterSelector
 	bandSelector           *BandSelector
 	stepSelector           *StepSelector
@@ -206,6 +211,7 @@ func NewMainScreen(receiver *sdr.Receiver) *MainScreen {
 		waterfallVisible:       true,
 		activeTool:             "WATERFALL_ADJUST",
 		viewMode:               1,
+		themeName:              themeDark,
 		spectrumMinimumDB:      -37,
 		spectrumMaximumDB:      0,
 		fftAveragingMs:         107,
@@ -362,6 +368,7 @@ func (screen *MainScreen) CreateControls() {
 	menu := simpleui.NewButton("menu", toolContentX, 842, 130, 40, "MENU", 15)
 	screen.viewButton = simpleui.NewButton("view", toolContentX+140, 842, 115, 40, "VIEW 1", 14)
 	screen.step = simpleui.NewButton("step", toolContentX+265, 842, 250, 40, "STEP  "+formatStep(screen.tuningStepHz), 15)
+	screen.themeButton = simpleui.NewButton("theme", toolContentX+525, 842, 190, 40, "ESTILO  "+themeDisplayName(screen.themeName), 13)
 	spanDown.OnClick(func() { screen.changeSpan(-1) })
 	spanUp.OnClick(func() { screen.changeSpan(1) })
 	screen.toolMenu = NewToolMenu(screen.activeTool, screen.selectTool)
@@ -375,6 +382,7 @@ func (screen *MainScreen) CreateControls() {
 	menu.OnClick(screen.toolMenu.Open)
 	screen.viewButton.OnClick(screen.cycleViewMode)
 	screen.step.OnClick(screen.stepSelector.Open)
+	screen.themeButton.OnClick(screen.cycleTheme)
 
 	screen.createWaterfallControls()
 	screen.fftDisplay = NewFFTDisplay(screen)
@@ -428,7 +436,7 @@ func (screen *MainScreen) CreateControls() {
 		screen.mode, screen.filter, screen.band,
 		squelch, screen.squelchLabel, screen.squelchSlider, holdLabel, holdSlider, closeLabel, closeSlider,
 		mute, screen.volumeLabel, screen.volumeSlider, screen.vfoModeSwitch, screen.memViewSwitch,
-		spanDown, spanUp, menu, screen.viewButton, screen.step,
+		spanDown, spanUp, menu, screen.viewButton, screen.step, screen.themeButton,
 	} {
 		simpleui.Add(element)
 	}
@@ -486,6 +494,7 @@ func (screen *MainScreen) CreateControls() {
 	simpleui.Add(screen.stepSelector)
 	simpleui.Add(screen.filterSelector)
 	simpleui.Add(screen.recorderPanel)
+	screen.applyTheme(screen.themeName)
 	// Apply the restored workspace only after every tool control exists.
 	screen.setViewMode(screen.viewMode)
 	if screen.activeTool == "RTL_433" {
@@ -658,7 +667,7 @@ func (screen *MainScreen) syncSquelchToSpectrumRange() {
 }
 
 func (screen *MainScreen) drawHeader() {
-	rl.DrawRectangle(0, 0, int32(designWidth), 205, rl.Color{R: 11, G: 15, B: 21, A: 255})
+	rl.DrawRectangle(0, 0, int32(designWidth), 205, colors.panel)
 	rl.DrawLine(0, 204, int32(designWidth), 204, colors.border)
 	screen.drawSquelchPanel()
 	screen.sdrHeader.DrawBackground()
@@ -810,8 +819,8 @@ func (screen *MainScreen) drawSpectrum() {
 	if screen.rtl433Panel != nil {
 		screen.rtl433Panel.DrawSpectrumOverlay(x, y, width, height)
 	}
-	drawSmallText("RF SPECTRUM", x+12, y+10, colors.cyan)
-	screen.drawDemodulatedBandwidth(x, y, width, height)
+	// Leave the left dB scale its own lane so the spectrum title never overlaps it.
+	drawSmallText("RF SPECTRUM", x+58, y+10, colors.cyan)
 	for division := 0; division <= 5; division++ {
 		fraction := float32(division) / 5
 		level := screen.spectrumMaximumDB + (screen.spectrumMinimumDB-screen.spectrumMaximumDB)*fraction
@@ -820,7 +829,13 @@ func (screen *MainScreen) drawSpectrum() {
 	}
 
 	if screen.stats.FFTBlocks > 0 {
-		traceColor := rl.Color{R: 145, G: 255, B: 45, A: 255}
+		// A solid blue spectrum makes occupied channels much easier to identify
+		// at a glance. Each narrow column receives its own vertical gradient so
+		// the live outline remains exact while the grid stays visible beneath it.
+		traceColor := rl.Color{R: 205, G: 238, B: 255, A: 255}
+		fillTop := rl.Color{R: 64, G: 164, B: 238, A: 205}
+		fillBottom := rl.Color{R: 7, G: 28, B: 105, A: 135}
+		graphBottom := y + height - 27
 		var previous rl.Vector2
 		hasPrevious := false
 		for pixel := 0; pixel < int(width); pixel++ {
@@ -830,8 +845,13 @@ func (screen *MainScreen) drawSpectrum() {
 				continue
 			}
 			current := rl.Vector2{X: x + float32(pixel), Y: screen.spectrumY(value, y, height)}
+			columnTop := min(max(current.Y, y+1), graphBottom)
+			columnHeight := graphBottom - columnTop
+			if columnHeight > 0 {
+				rl.DrawRectangleGradientV(int32(current.X), int32(columnTop), 2, int32(columnHeight+1), fillTop, fillBottom)
+			}
 			if hasPrevious {
-				rl.DrawLineEx(previous, current, 1.4, traceColor)
+				rl.DrawLineEx(previous, current, 1.35, traceColor)
 			}
 			previous = current
 			hasPrevious = true
@@ -846,6 +866,9 @@ func (screen *MainScreen) drawSpectrum() {
 		}
 		simpleui.DrawText(message, x+48, y+height*.5, 13, colors.orange)
 	}
+	// Operational overlays stay above the blue fill so their boundaries and
+	// labels never disappear inside a strong carrier.
+	screen.drawDemodulatedBandwidth(x, y, width, height)
 	// Paint the live tuning cursor before memory markers. Memory lines and
 	// labels then remain readable where they cross the current VFO.
 	centerX := x + width*.5
@@ -875,27 +898,26 @@ func (screen *MainScreen) drawSpectrum() {
 		rl.DrawRectangleRounded(tag, .2, 6, rl.Color{R: 15, G: 18, B: 26, A: 220})
 		simpleui.DrawTextStyled(label, x+11, sqlY-7, 11, simpleui.FontSemiBold, rl.Color{R: 255, G: 135, B: 75, A: 255})
 	}
-	rl.DrawRectangle(int32(x), int32(y+height-26), int32(width), 26, rl.Color{R: 12, G: 27, B: 32, A: 245})
-	for mark := 0; mark <= 4; mark++ {
-		markX := x + width*float32(mark)/4
-		frequency := float64(screen.centerFrequencyHz-screen.spanHz/2+int64(mark)*screen.spanHz/4) / 1e6
+	axisBackground := colors.panelAlt
+	axisBackground.A = 245
+	rl.DrawRectangle(int32(x), int32(y+height-26), int32(width), 26, axisBackground)
+	// Match the vertical grid with a readable frequency at every division.
+	// The previous five tiny labels left too much distance between references.
+	for mark := 0; mark <= 10; mark++ {
+		markX := x + width*float32(mark)/10
+		frequency := float64(screen.centerFrequencyHz-screen.spanHz/2+int64(mark)*screen.spanHz/10) / 1e6
 		label := fmt.Sprintf("%.3f", frequency)
-		labelWidth := simpleui.MeasureText(label, 9).X
-		simpleui.DrawTextStyled(label, markX-labelWidth*.5, y+height-19, 9, simpleui.FontMono, colors.text)
+		labelWidth := simpleui.MeasureTextStyled(label, 12, simpleui.FontMono).X
+		labelX := min(max(markX-labelWidth*.5, x+4), x+width-labelWidth-4)
+		simpleui.DrawTextStyled(label, labelX, y+height-21, 12, simpleui.FontMono, colors.text)
 	}
-	// RTL_433 uses the top lane for its decoded RF interval. The diagnostic
-	// counters are intentionally omitted there: they are secondary information
-	// and previously collided with both the decoder and tuning labels.
-	if screen.activeTool != "RTL_433" {
-		status := fmt.Sprintf("IQ RMS %.5f  PEAK %.5f  ·  %.1f FFT/s  ·  SAMPLES %d  ·  OVF %d  BAD %d",
-			screen.stats.RMS, screen.stats.Peak, screen.stats.FFTPerSecond,
-			screen.stats.ReceivedSamples, screen.stats.Overflows, screen.stats.InvalidSamples)
-		simpleui.DrawTextStyled(status, x+490, y+8, 9, simpleui.FontMono, colors.muted)
-	}
+	memoryTooltipVisible := false
 	if screen.memoryPanel != nil {
-		screen.memoryPanel.DrawMarkerTooltip(x, y, width, height)
+		memoryTooltipVisible = screen.memoryPanel.DrawMarkerTooltip(x, y, width, height)
 	}
-	screen.drawSpectrumHoverTooltip(x, y, width, height)
+	if !memoryTooltipVisible {
+		screen.drawSpectrumHoverTooltip(x, y, width, height)
+	}
 }
 
 func (screen *MainScreen) drawSpectrumHoverTooltip(x, y, width, height float32) {
@@ -929,11 +951,15 @@ func (screen *MainScreen) drawSpectrumHoverTooltip(x, y, width, height float32) 
 	box.Y = min(max(box.Y, y+5), graphBottom-box.Height-5)
 	// A subtle vertical guide makes the sampled FFT bin unambiguous without
 	// obscuring the trace or the memory markers.
-	rl.DrawLineEx(rl.Vector2{X: mouse.X, Y: y + 1}, rl.Vector2{X: mouse.X, Y: graphBottom}, 1, rl.Color{R: 80, G: 220, B: 205, A: 120})
-	rl.DrawRectangleRounded(box, .14, 7, rl.Color{R: 20, G: 24, B: 29, A: 238})
-	rl.DrawRectangleRoundedLinesEx(box, .14, 7, 1, rl.Color{R: 105, G: 120, B: 128, A: 255})
-	simpleui.DrawTextStyled(frequencyText, box.X+11, box.Y+6, fontSize, simpleui.FontMono, colors.text)
-	simpleui.DrawTextStyled(levelText, box.X+11, box.Y+26, fontSize, simpleui.FontMono, colors.cyan)
+	guideColor := colors.cyan
+	guideColor.A = 120
+	rl.DrawLineEx(rl.Vector2{X: mouse.X, Y: y + 1}, rl.Vector2{X: mouse.X, Y: graphBottom}, 1, guideColor)
+	tooltipBackground := colors.panel
+	tooltipBackground.A = 248
+	rl.DrawRectangleRounded(box, .14, 7, tooltipBackground)
+	rl.DrawRectangleRoundedLinesEx(box, .14, 7, 1, colors.border)
+	simpleui.DrawTextStyled(frequencyText, box.X+11, box.Y+6, fontSize, simpleui.FontMono, simpleui.EnsureTextContrast(colors.text, tooltipBackground))
+	simpleui.DrawTextStyled(levelText, box.X+11, box.Y+26, fontSize, simpleui.FontMono, simpleui.EnsureTextContrast(colors.cyan, tooltipBackground))
 }
 
 func (screen *MainScreen) drawDemodulatedBandwidth(x, y, width, height float32) {
@@ -987,10 +1013,12 @@ func (screen *MainScreen) drawTuningCursorLabel(cursorX, y, graphX, graphWidth f
 	plateWidth := max(freqWidth, detailWidth) + 22
 	plateX := min(max(cursorX-plateWidth/2, graphX+6), graphX+graphWidth-plateWidth-6)
 	plate := rl.Rectangle{X: plateX, Y: y + 25, Width: plateWidth, Height: 50}
-	rl.DrawRectangleRounded(plate, .14, 8, rl.Color{R: 5, G: 10, B: 15, A: 242})
+	plateBackground := colors.panel
+	plateBackground.A = 248
+	rl.DrawRectangleRounded(plate, .14, 8, plateBackground)
 	rl.DrawRectangleRoundedLinesEx(plate, .14, 8, 1.5, markerColor)
-	simpleui.DrawTextStyled(frequency, plate.X+(plate.Width-freqWidth)/2, plate.Y+6, frequencySize, simpleui.FontMono, markerColor)
-	simpleui.DrawTextStyled(bandwidth, plate.X+(plate.Width-detailWidth)/2, plate.Y+29, detailSize, simpleui.FontSemiBold, colors.orange)
+	simpleui.DrawTextStyled(frequency, plate.X+(plate.Width-freqWidth)/2, plate.Y+6, frequencySize, simpleui.FontMono, simpleui.EnsureTextContrast(markerColor, plateBackground))
+	simpleui.DrawTextStyled(bandwidth, plate.X+(plate.Width-detailWidth)/2, plate.Y+29, detailSize, simpleui.FontSemiBold, simpleui.EnsureTextContrast(colors.orange, plateBackground))
 }
 
 func (screen *MainScreen) drawLowerWorkspace() {
@@ -1169,8 +1197,16 @@ func (screen *MainScreen) selectTool(tool string) {
 	if previous == "TETRA" && tool != "TETRA" && screen.tetraPanel != nil {
 		screen.tetraPanel.Leave()
 	}
-	screen.setViewMode(1)
+	// A tool can be selected while VIEW 2 is active and while the menu owns the
+	// mouse release. Discard any gesture begun on the old geometry, then publish
+	// the new tool before restoring VIEW 1 so visibility is calculated from the
+	// new state in one pass.
+	screen.draggingSpectrum = false
+	if screen.scanPanel != nil {
+		screen.scanPanel.dragTarget = 0
+	}
 	screen.activeTool = tool
+	screen.setViewMode(1)
 	if tool == "DMR_MONITOR" && screen.mode != nil && screen.mode.SelectedText() != "DMR BETA" {
 		for index, item := range screen.mode.Items() {
 			if item == "DMR BETA" {
@@ -1332,7 +1368,7 @@ func (screen *MainScreen) setViewMode(mode int) {
 }
 
 func (screen *MainScreen) spectrumGeometry() (x, y, width, height float32) {
-	x, y, width, height = utilitiesRight+10, 215, 1576-(utilitiesRight+10), 235
+	x, y, width, height = toolContentX, 215, toolContentRight-toolContentX, 235
 	if screen.viewMode == 2 {
 		height = 470
 	}
@@ -1340,7 +1376,7 @@ func (screen *MainScreen) spectrumGeometry() (x, y, width, height float32) {
 }
 
 func (screen *MainScreen) waterfallGeometry() (x, y, width, height float32) {
-	x, y, width, height = utilitiesRight+10, 450, 1576-(utilitiesRight+10), 170
+	x, y, width, height = toolContentX, 450, toolContentRight-toolContentX, 170
 	if screen.viewMode == 2 {
 		y, height = 685, 141
 	}
@@ -1661,19 +1697,27 @@ func (screen *MainScreen) updateSpectrumDrag() {
 	x, y, width, height := screen.spectrumGeometry()
 	mouse := simpleui.MousePosition()
 	over := mouse.X >= x && mouse.X <= x+width && mouse.Y >= y && mouse.Y <= y+height
+	wheel := rl.GetMouseWheelMove()
 	if screen.rtl433Panel != nil && screen.rtl433Panel.HandleSpectrumInput(mouse, x, y, width, height) {
 		screen.draggingSpectrum = false
 		return
 	}
 	if screen.scanPanel != nil && screen.scanPanel.ConsumesSpectrumInput() && over {
-		screen.draggingSpectrum = false
-		return
+		// Direct tuning always wins over an automatic scan. Previously a running
+		// scanner swallowed every wheel/click event, which looked like a frozen
+		// FFT after leaving VIEW 2 or changing tools.
+		if screen.scanPanel.running && (wheel != 0 || rl.IsMouseButtonPressed(rl.MouseButtonLeft)) && screen.scanPanel.dragTarget == 0 {
+			screen.scanPanel.ToggleRunning()
+		} else {
+			screen.draggingSpectrum = false
+			return
+		}
 	}
 	if rl.IsMouseButtonPressed(rl.MouseButtonLeft) && over && screen.memoryPanel != nil && screen.memoryPanel.HandleMarkerClick(mouse, x, y, width, height) {
 		return
 	}
 	if over {
-		if steps := wheelSteps(rl.GetMouseWheelMove()); steps != 0 {
+		if steps := wheelSteps(wheel); steps != 0 {
 			previousFrequency := screen.frequencyHz
 			if screen.centerMode {
 				screen.tuneCenteredBySteps(steps)

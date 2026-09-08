@@ -139,8 +139,8 @@ func (selector *BandSelector) DrawOverlay() {
 	accent := selector.accent()
 	rl.DrawRectangle(0, 0, int32(designWidth), int32(designHeight), rl.Color{A: 200})
 	modal := rl.Rectangle{X: 130, Y: 70, Width: 1020, Height: 530}
-	rl.DrawRectangleRounded(modal, .022, 8, rl.Color{R: 24, G: 27, B: 35, A: 255})
-	rl.DrawRectangleRoundedLinesEx(modal, .022, 8, 2, rl.Color{R: 95, G: 110, B: 135, A: 255})
+	rl.DrawRectangleRounded(modal, .022, 8, colors.panel)
+	rl.DrawRectangleRoundedLinesEx(modal, .022, 8, 2, colors.border)
 	rl.DrawRectangleRounded(rl.Rectangle{X: 130, Y: 70, Width: 10, Height: 530}, .5, 8, accent)
 	simpleui.DrawTextStyled("SELECCIÓN DE BANDA", 170, 91, 27, simpleui.FontRegular, colors.text)
 
@@ -149,34 +149,36 @@ func (selector *BandSelector) DrawOverlay() {
 		bounds := selector.categoryBounds(index)
 		active := []string{"HAM", "COMMERCIAL", "ISM"}[index] == selector.category
 		categoryAccent := selector.categoryAccent(index)
-		fill := blendRGBA(rl.Color{R: 42, G: 45, B: 52, A: 255}, categoryAccent, .24)
+		fill := blendRGBA(colors.panelAlt, categoryAccent, .24)
 		if active {
 			fill = blendRGBA(categoryAccent, rl.White, .05)
 		}
 		rl.DrawRectangleRounded(bounds, .12, 8, fill)
 		rl.DrawRectangleRoundedLinesEx(bounds, .12, 8, 2, blendRGBA(categoryAccent, rl.White, .28))
-		drawCentered(label, bounds, 17, colors.text)
+		drawCentered(label, bounds, 17, simpleui.EnsureTextContrast(colors.text, fill))
 	}
 
 	bands := bandsByCategory[selector.category]
 	for index, band := range bands {
 		bounds := selector.bandBounds(index)
 		selected := band.Category == selector.selectedCategory && band.Name == selector.selectedName
-		fill := rl.Color{R: 38, G: 42, B: 51, A: 255}
+		fill := colors.panelAlt
 		if selected {
 			fill = accent
 		}
 		rl.DrawRectangleRounded(bounds, .14, 8, fill)
 		rl.DrawRectangleRoundedLinesEx(bounds, .14, 8, 2, accent)
-		drawCentered(band.Name, rl.Rectangle{X: bounds.X, Y: bounds.Y + 8, Width: bounds.Width, Height: 20}, 15, colors.text)
-		drawCentered(formatBandFrequency(band.FrequencyHz), rl.Rectangle{X: bounds.X, Y: bounds.Y + 28, Width: bounds.Width, Height: 20}, 14, colors.text)
+		labelColor := simpleui.EnsureTextContrast(colors.text, fill)
+		drawCentered(band.Name, rl.Rectangle{X: bounds.X, Y: bounds.Y + 8, Width: bounds.Width, Height: 20}, 15, labelColor)
+		drawCentered(formatBandFrequency(band.FrequencyHz), rl.Rectangle{X: bounds.X, Y: bounds.Y + 28, Width: bounds.Width, Height: 20}, 14, labelColor)
 	}
 
 	simpleui.DrawText("Selecciona una banda para cambiar la frecuencia y el span.", 170, 540, 15, colors.text)
 	cancel := selector.cancelBounds()
-	rl.DrawRectangleRounded(cancel, .16, 8, rl.Color{R: 70, G: 74, B: 84, A: 255})
+	cancelFill := colors.panelAlt
+	rl.DrawRectangleRounded(cancel, .16, 8, cancelFill)
 	rl.DrawRectangleRoundedLinesEx(cancel, .16, 8, 2, rl.Color{R: 135, G: 140, B: 145, A: 255})
-	drawCentered("CANCELAR", cancel, 16, colors.text)
+	drawCentered("CANCELAR", cancel, 16, simpleui.EnsureTextContrast(colors.text, cancelFill))
 }
 
 func (selector *BandSelector) categoryAt(point rl.Vector2) int {

@@ -57,5 +57,15 @@ var currentTheme = Theme{
 	BorderWidth:     1,
 }
 
+var colorTransform = func(color rl.Color) rl.Color { return color }
+
 func SetTheme(theme Theme) { currentTheme = theme }
 func CurrentTheme() Theme  { return currentTheme }
+func SetColorTransform(transform func(rl.Color) rl.Color) {
+	if transform == nil {
+		colorTransform = func(color rl.Color) rl.Color { return color }
+		return
+	}
+	colorTransform = transform
+}
+func themedColor(color rl.Color) rl.Color { return colorTransform(color) }
