@@ -1,0 +1,192 @@
+[
+  {
+    "name": "PMR-01",
+    "frequencyHz": 446006250,
+    "mode": "NFM",
+    "filterBandwidthHz": 11500,
+    "stepHz": 6250,
+    "scanEnabled": true,
+    "group": "PMR",
+    "priority": false
+  },
+  {
+    "name": "PMR-02",
+    "frequencyHz": 446018750,
+    "mode": "NFM",
+    "filterBandwidthHz": 11500,
+    "stepHz": 6250,
+    "scanEnabled": true,
+    "group": "PMR",
+    "priority": false
+  },
+  {
+    "name": "PMR-03",
+    "frequencyHz": 446031250,
+    "mode": "NFM",
+    "filterBandwidthHz": 11500,
+    "stepHz": 6250,
+    "scanEnabled": true,
+    "group": "PMR",
+    "priority": false
+  },
+  {
+    "name": "PMR-04",
+    "frequencyHz": 446043750,
+    "mode": "NFM",
+    "filterBandwidthHz": 11500,
+    "stepHz": 6250,
+    "scanEnabled": true,
+    "group": "PMR",
+    "priority": false
+  },
+  {
+    "name": "PMR-05",
+    "frequencyHz": 446056250,
+    "mode": "NFM",
+    "filterBandwidthHz": 11500,
+    "stepHz": 6250,
+    "scanEnabled": true,
+    "group": "PMR",
+    "priority": false
+  },
+  {
+    "name": "PMR-06",
+    "frequencyHz": 446068750,
+    "mode": "NFM",
+    "filterBandwidthHz": 11500,
+    "stepHz": 6250,
+    "scanEnabled": true,
+    "group": "PMR",
+    "priority": false
+  },
+  {
+    "name": "PMR-07",
+    "frequencyHz": 446081250,
+    "mode": "NFM",
+    "filterBandwidthHz": 11500,
+    "stepHz": 6250,
+    "scanEnabled": true,
+    "group": "PMR",
+    "priority": false
+  },
+  {
+    "name": "PMR-08",
+    "frequencyHz": 446093750,
+    "mode": "NFM",
+    "filterBandwidthHz": 11500,
+    "stepHz": 6250,
+    "scanEnabled": true,
+    "group": "PMR",
+    "priority": false
+  },
+  {
+    "name": "PMR-09",
+    "frequencyHz": 446106250,
+    "mode": "NFM",
+    "filterBandwidthHz": 11500,
+    "stepHz": 6250,
+    "scanEnabled": true,
+    "group": "PMR",
+    "priority": false
+  },
+  {
+    "name": "PMR-10",
+    "frequencyHz": 446118750,
+    "mode": "NFM",
+    "filterBandwidthHz": 11500,
+    "stepHz": 6250,
+    "scanEnabled": true,
+    "group": "PMR",
+    "priority": false
+  },
+  {
+    "name": "PMR-11",
+    "frequencyHz": 446131250,
+    "mode": "NFM",
+    "filterBandwidthHz": 11500,
+    "stepHz": 6250,
+    "scanEnabled": true,
+    "group": "PMR",
+    "priority": false
+  },
+  {
+    "name": "PMR-12",
+    "frequencyHz": 446143750,
+    "mode": "NFM",
+    "filterBandwidthHz": 11500,
+    "stepHz": 6250,
+    "scanEnabled": true,
+    "group": "PMR",
+    "priority": false
+  },
+  {
+    "name": "PMR-13",
+    "frequencyHz": 446156250,
+    "mode": "NFM",
+    "filterBandwidthHz": 11500,
+    "stepHz": 6250,
+    "scanEnabled": true,
+    "group": "PMR",
+    "priority": false
+  },
+  {
+    "name": "PMR-14",
+    "frequencyHz": 446168750,
+    "mode": "NFM",
+    "filterBandwidthHz": 11500,
+    "stepHz": 6250,
+    "scanEnabled": true,
+    "group": "PMR",
+    "priority": false
+  },
+  {
+    "name": "PMR-15",
+    "frequencyHz": 446181250,
+    "mode": "NFM",
+    "filterBandwidthHz": 11500,
+    "stepHz": 6250,
+    "scanEnabled": true,
+    "group": "PMR",
+    "priority": false
+  },
+  {
+    "name": "PMR-16",
+    "frequencyHz": 446193750,
+    "mode": "NFM",
+    "filterBandwidthHz": 11500,
+    "stepHz": 6250,
+    "scanEnabled": true,
+    "group": "PMR",
+    "priority": false
+  },
+  {
+    "name": "DMR BCN 01",
+    "frequencyHz": 438412500,
+    "mode": "DMR BETA",
+    "filterBandwidthHz": 11500,
+    "stepHz": 12500,
+    "scanEnabled": true,
+    "group": "REPETIDORES",
+    "priority": false
+  },
+  {
+    "name": "SSTV 20 m",
+    "frequencyHz": 14230000,
+    "mode": "USB",
+    "filterBandwidthHz": 2400,
+    "stepHz": 1000,
+    "scanEnabled": false,
+    "group": "SSTV",
+    "priority": false
+  },
+  {
+    "name": "APRS ESPAÑA",
+    "frequencyHz": 144800000,
+    "mode": "NFM",
+    "filterBandwidthHz": 12500,
+    "stepHz": 1000,
+    "scanEnabled": true,
+    "group": "APRS ESP",
+    "priority": false
+  }
+]

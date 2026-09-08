@@ -1,0 +1,68 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "GO-Zero: Ejecutar",
+      "type": "process",
+      "command": "go",
+      "args": ["run", "."],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "CGO_ENABLED": "0"
+        }
+      },
+      "problemMatcher": ["$go"],
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "GO-Zero: Compilar Windows",
+      "type": "process",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\build-release.ps1"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": ["$go"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "GO-Zero: Ejecutar audio estable (sin depurador)",
+      "type": "process",
+      "command": "${workspaceFolder}\\dist\\IC-SDR-Go\\IC-SDR-Go.exe",
+      "dependsOn": "GO-Zero: Compilar Windows",
+      "dependsOrder": "sequence",
+      "options": {
+        "cwd": "${workspaceFolder}\\dist\\IC-SDR-Go"
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      },
+      "presentation": {
+        "reveal": "never",
+        "panel": "dedicated",
+        "clear": true
+      }
+    }
+  ]
+}

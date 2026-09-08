@@ -1,0 +1,17 @@
+/dist/
+/build/
+/ORIGEN/
+*.exe
+
+# Runtime and user-generated data
+DATA/cache/
+DATA/logs/
+DATA/recordings/
+DATA/exports/
+DATA/captures/
+
+# Editor and operating-system files
+.DS_Store
+Thumbs.db
+*.tmp
+*.log

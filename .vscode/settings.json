@@ -1,0 +1,10 @@
+{
+  "go.goroot": "C:\\Program Files\\Go",
+  "go.alternateTools": {
+    "go": "C:\\Program Files\\Go\\bin\\go.exe",
+    "dlv": "C:\\Users\\luis\\go\\bin\\dlv.exe"
+  },
+  "terminal.integrated.env.windows": {
+    "PATH": "C:\\Program Files\\Go\\bin;C:\\Users\\luis\\go\\bin;${env:PATH}"
+  }
+}

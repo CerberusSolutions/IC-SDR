@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "F5 · Reconstruir y ejecutar portable completo",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"& '${workspaceFolder}\\dist\\IC-SDR-Go\\IC-SDR-Go.exe'\"",
+      "cwd": "${workspaceFolder}\\dist\\IC-SDR-Go",
+      "preLaunchTask": "GO-Zero: Compilar Windows"
+    }
+  ]
+}

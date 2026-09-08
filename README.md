@@ -1,0 +1,72 @@
+# IC-SDR
+
+**SDR multimodo para Windows, programado en Go para ofrecer la máxima eficiencia.**
+
+IC-SDR reúne recepción, demodulación, análisis de espectro y decodificación de señales digitales en una interfaz de escritorio diseñada para el uso diario.
+
+> [!IMPORTANT]
+> IC-SDR está diseñado específicamente para **Windows**. El binario y todos los componentes necesarios para su distribución portable se encuentran en la carpeta `dist/IC-SDR-Go` después de generar el paquete.
+
+![Interfaz principal de IC-SDR](docs/images/ic-sdr-principal.png)
+
+## Características
+
+- Demodulación en **AM, NFM, WFM, LSB y USB**.
+- Soporte para modos digitales.
+- Espectro y cascada en tiempo real.
+- Banco de memorias organizado por grupos.
+- Grabador de audio con eliminación automática de espacios en blanco.
+- Escáner de segmentos de frecuencia con disparo instantáneo.
+- Detector de tonos y control de squelch.
+- Ecualizador de cinco bandas y controles de procesamiento de audio.
+
+## Decodificadores
+
+IC-SDR integra herramientas para recibir y visualizar:
+
+- **AIS** — seguimiento de embarcaciones en los canales marítimos.
+- **ADS-B** — recepción de aeronaves en 1090 MHz y UAT 978 MHz.
+- **Radiosondas** — compatibilidad con RS41, DFM y M10/M20.
+- **APRS** — recepción y visualización de paquetes.
+- **RTL_433** — decodificación de sensores y dispositivos ISM, con exportación CSV.
+- **DMR** — recepción de radio digital.
+- **SSTV** — televisión de barrido lento.
+- **TETRA** — recepción y análisis de señales TETRA.
+
+![Decodificación RTL_433 en IC-SDR](docs/images/ic-sdr-rtl433.png)
+
+## Windows y distribución portable
+
+IC-SDR está pensado para ejecutarse en Windows. La carpeta local `dist/IC-SDR-Go` contiene el binario distribuible `IC-SDR-Go.exe`, sus runtimes y las herramientas auxiliares necesarias. El directorio `DATA` debe permanecer junto al ejecutable.
+
+La carpeta `dist/` se genera localmente y no forma parte del código fuente versionado. Para reconstruirla se utiliza `build-release.ps1`.
+
+## Requisitos
+
+- Windows.
+- Go 1.27 o posterior para compilar desde el código fuente.
+- Un receptor compatible con RTL-SDR o SoapySDR/SDRplay.
+
+## Compilación
+
+Desde la raíz del repositorio:
+
+```powershell
+go build .
+```
+
+Para generar la distribución portable de Windows:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build-release.ps1
+```
+
+La distribución se crea en `dist/IC-SDR-Go`. Consulta [DISTRIBUTION.md](DISTRIBUTION.md) para obtener más información sobre el paquete portable y los directorios de datos.
+
+## Datos y configuración
+
+Los ajustes, memorias, grabaciones, capturas, exportaciones y registros se almacenan bajo `DATA`. Los datos generados durante el uso no se incluyen en el repositorio.
+
+## Estado del proyecto
+
+IC-SDR se encuentra en desarrollo activo. Las funciones disponibles pueden variar según el receptor, los controladores y las herramientas de decodificación instaladas.
