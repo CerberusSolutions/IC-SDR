@@ -11,17 +11,17 @@ import (
 
 type RecorderPanel struct {
 	simpleui.BaseElement
-	screen                            *MainScreen
-	recorder                          *AudioRecorder
-	controls                          []simpleui.Element
-	toolControls                      []simpleui.Element
-	record, pause, folder             *simpleui.Button
-	skip                              *simpleui.Switch
-	toolRecord, toolPause, toolFolder *simpleui.Button
-	toolSkip                          *simpleui.Switch
-	deleteModal                       bool
-	deleteCandidate                   string
-	modalPressed                      int
+	screen                                        *MainScreen
+	recorder                                      *AudioRecorder
+	controls                                      []simpleui.Element
+	toolControls                                  []simpleui.Element
+	record, pause, format, folder                 *simpleui.Button
+	skip                                          *simpleui.Switch
+	toolRecord, toolPause, toolFormat, toolFolder *simpleui.Button
+	toolSkip                                      *simpleui.Switch
+	deleteModal                                   bool
+	deleteCandidate                               string
+	modalPressed                                  int
 }
 
 func NewRecorderPanel(screen *MainScreen, recorder *AudioRecorder) *RecorderPanel {
@@ -30,12 +30,14 @@ func NewRecorderPanel(screen *MainScreen, recorder *AudioRecorder) *RecorderPane
 	p.record.SetColors(rl.Color{R: 145, G: 38, B: 42, A: 255}, rl.Color{R: 255, G: 95, B: 95, A: 255}, colors.text)
 	p.pause = simpleui.NewButton("audioRecordPause", 1442, 445, 138, 36, "PAUSA", uiControlFontSize)
 	p.skip = simpleui.NewSwitch("audioRecordSkipSQL", 1300, 489, 280, 30, "OMITIR SILENCIO SQL", screen.recorderSkipSilence, uiMinimumFontSize)
-	p.folder = simpleui.NewButton("audioRecordFolder", 1300, 525, 280, 32, "ABRIR CARPETA", 13)
+	p.format = simpleui.NewButton("audioRecordFormat", 1300, 525, 98, 32, "MP3", 13)
+	p.folder = simpleui.NewButton("audioRecordFolder", 1406, 525, 174, 32, "ABRIR CARPETA", 13)
 	p.toolRecord = simpleui.NewButton("toolAudioRecord", 35, 715, 135, 40, "GRABAR", uiControlFontSize)
 	p.toolRecord.SetColors(rl.Color{R: 145, G: 38, B: 42, A: 255}, rl.Color{R: 255, G: 95, B: 95, A: 255}, colors.text)
 	p.toolPause = simpleui.NewButton("toolAudioPause", 180, 715, 135, 40, "PAUSA", uiControlFontSize)
 	p.toolSkip = simpleui.NewSwitch("toolAudioSkipSQL", 330, 715, 270, 40, "OMITIR SILENCIO SQL", screen.recorderSkipSilence, 13)
-	p.toolFolder = simpleui.NewButton("toolAudioFolder", 35, 766, 565, 42, "ABRIR CARPETA DE GRABACIONES", uiControlFontSize)
+	p.toolFormat = simpleui.NewButton("toolAudioFormat", 35, 766, 150, 42, "FORMATO MP3", 13)
+	p.toolFolder = simpleui.NewButton("toolAudioFolder", 195, 766, 405, 42, "ABRIR CARPETA DE GRABACIONES", 14)
 	startStop := p.ToggleRecording
 	togglePause := p.TogglePause
 	setSkip := func(value bool) {
@@ -45,16 +47,31 @@ func NewRecorderPanel(screen *MainScreen, recorder *AudioRecorder) *RecorderPane
 		p.refresh()
 	}
 	openFolder := func() { openExplorerPath(recorder.Directory()) }
+	toggleFormat := func() {
+		if recorder.State().Recording {
+			return
+		}
+		if screen.recorderFormat == recorderFormatMP3 {
+			screen.recorderFormat = recorderFormatWAV
+		} else {
+			screen.recorderFormat = recorderFormatMP3
+		}
+		recorder.SetFormat(screen.recorderFormat)
+		screen.markSettingsDirty()
+		p.refresh()
+	}
 	p.record.OnClick(startStop)
 	p.toolRecord.OnClick(startStop)
 	p.pause.OnClick(togglePause)
 	p.toolPause.OnClick(togglePause)
 	p.skip.OnChange(setSkip)
 	p.toolSkip.OnChange(setSkip)
+	p.format.OnClick(toggleFormat)
+	p.toolFormat.OnClick(toggleFormat)
 	p.folder.OnClick(openFolder)
 	p.toolFolder.OnClick(openFolder)
-	p.controls = []simpleui.Element{p.record, p.pause, p.skip, p.folder}
-	p.toolControls = []simpleui.Element{p.toolRecord, p.toolPause, p.toolSkip, p.toolFolder}
+	p.controls = []simpleui.Element{p.record, p.pause, p.skip, p.format, p.folder}
+	p.toolControls = []simpleui.Element{p.toolRecord, p.toolPause, p.toolSkip, p.toolFormat, p.toolFolder}
 	p.SetToolVisible(false)
 	p.refresh()
 	return p
@@ -103,6 +120,10 @@ func (p *RecorderPanel) refresh() {
 	}
 	p.pause.SetEnabled(state.Recording)
 	p.toolPause.SetEnabled(state.Recording)
+	p.format.SetEnabled(!state.Recording)
+	p.toolFormat.SetEnabled(!state.Recording)
+	p.format.SetLabel(state.Format)
+	p.toolFormat.SetLabel("FORMATO " + state.Format)
 	p.skip.SetActive(state.SkipSquelchSilence)
 	p.toolSkip.SetActive(state.SkipSquelchSilence)
 }
@@ -209,7 +230,7 @@ func (p *RecorderPanel) DrawSidebar() {
 	drawSidebarSection(1292, 324, 296, 260, "RECORDER", colors.red)
 	drawStatusDot(1560, 340, state.Recording, "RECORDING", "READY")
 	simpleui.DrawTextStyled(formatRecordingDuration(state.DurationSeconds), 1372, 354, 25, simpleui.FontMono, colors.text)
-	simpleui.DrawTextStyled("WAV · 48 kHz · 16-bit · MONO", 1330, 389, 12, simpleui.FontRegular, colors.muted)
+	simpleui.DrawTextStyled(recorderFormatDescription(state.Format), 1330, 389, 12, simpleui.FontRegular, colors.muted)
 	drawRecorderMeter(1308, 405, 264, 29, state.PeakDBFS, state.Recording && !state.Paused)
 	simpleui.DrawTextStyled("GLOBAL AUDIO RECORDER", 1308, 562, 12, simpleui.FontRegular, colors.muted)
 	if state.DroppedChunks > 0 {
@@ -238,7 +259,13 @@ func (p *RecorderPanel) DrawPanel() {
 	simpleui.DrawTextStyled(status, 64, 649, 16, simpleui.FontSemiBold, colors.text)
 	simpleui.DrawTextStyled(formatRecordingDuration(state.DurationSeconds), 64, 676, 24, simpleui.FontMono, colors.text)
 	drawRecorderMeter(330, 650, 270, 38, state.PeakDBFS, state.Recording && !state.Paused)
-	simpleui.DrawTextStyled("WAV · 48 kHz · 16-bit · MONO · ARCHIVO ÚNICO POR SESIÓN", 270, 694, 12, simpleui.FontRegular, colors.muted)
+	detail := recorderFormatDescription(state.Format) + " · ARCHIVO ÚNICO POR SESIÓN"
+	if state.Encoding {
+		detail = "CREANDO MP3…"
+	} else if state.LastError != "" {
+		detail = trimMemory(state.LastError, 72)
+	}
+	simpleui.DrawTextStyled(detail, 270, 694, 12, simpleui.FontRegular, colors.muted)
 	drawPanel(650, 638, 910, 182)
 	simpleui.DrawTextStyled("ÚLTIMAS GRABACIONES", 665, 650, 14, simpleui.FontSemiBold, colors.text)
 	if len(state.RecentFiles) == 0 {
@@ -256,6 +283,13 @@ func (p *RecorderPanel) DrawPanel() {
 		drawRecorderRowButton(recorderPlayBounds(i), "▶", colors.green)
 		drawRecorderRowButton(recorderDeleteBounds(i), "DEL", colors.red)
 	}
+}
+
+func recorderFormatDescription(format string) string {
+	if format == recorderFormatMP3 {
+		return "MP3 · 48 kHz · 128 kbps · MONO"
+	}
+	return "WAV · 48 kHz · 16-bit · MONO"
 }
 
 func recorderPlayBounds(row int) rl.Rectangle {

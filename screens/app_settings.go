@@ -54,6 +54,7 @@ type persistedAppSettings struct {
 	WaterfallPalette      string                `json:"waterfallPalette,omitempty"`
 	MemoryViewEnabled     *bool                 `json:"memoryViewEnabled,omitempty"`
 	RecorderSkipSilence   *bool                 `json:"recorderSkipSilence,omitempty"`
+	RecorderFormat        string                `json:"recorderFormat,omitempty"`
 	Volume                *float32              `json:"volume,omitempty"`
 	Muted                 *bool                 `json:"muted,omitempty"`
 	DMRAutoCenter         *bool                 `json:"dmrAutoCenter,omitempty"`
@@ -177,6 +178,9 @@ func loadAppSettings(path string, screen *MainScreen) {
 	if settings.RecorderSkipSilence != nil {
 		screen.recorderSkipSilence = *settings.RecorderSkipSilence
 	}
+	if settings.RecorderFormat == recorderFormatWAV || settings.RecorderFormat == recorderFormatMP3 {
+		screen.recorderFormat = settings.RecorderFormat
+	}
 	if settings.Volume != nil && *settings.Volume >= 0 && *settings.Volume <= 100 {
 		screen.volume = *settings.Volume
 	}
@@ -258,6 +262,7 @@ func (screen *MainScreen) flushSettings(force bool) {
 		WaterfallMaximum: screen.waterfallSettings.MaximumDBm, WaterfallPalette: screen.waterfallSettings.Palette,
 		MemoryViewEnabled:   boolSetting(screen.memoryViewEnabled),
 		RecorderSkipSilence: boolSetting(screen.recorderSkipSilence),
+		RecorderFormat:      screen.recorderFormat,
 		Volume:              float32Setting(screen.volume), Muted: boolSetting(screen.muted),
 		DMRAutoCenter: boolSetting(screen.dmrAutoCenter), DMRAudioSlot: screen.dmrAudioSlot,
 		RTL433FrequencyHz:     screen.rtl433FrequencyHz,

@@ -57,3 +57,45 @@ func TestEditGroupRenamesAndAppliesSharedFlags(t *testing.T) {
 		t.Fatalf("group color was not moved: %+v", panel.groupColors)
 	}
 }
+
+func TestEditGroupCanReturnToNoMove(t *testing.T) {
+	panel := &MemoryPanel{
+		groups:               []string{"TODAS", "OLD", "DESTINO"},
+		pendingOriginalGroup: "OLD",
+	}
+	panel.moveEditedGroup()
+	if panel.pendingMoveGroup == "" {
+		t.Fatal("el primer clic debe seleccionar un destino")
+	}
+	for panel.pendingMoveGroup != "" {
+		panel.moveEditedGroup()
+	}
+	if panel.pendingMoveGroup != "" {
+		t.Fatal("el selector debe poder volver a NO MOVER")
+	}
+}
+
+func TestEditGroupMovesMemoriesIntoExistingGroup(t *testing.T) {
+	dir := t.TempDir()
+	panel := &MemoryPanel{
+		memories: []MemoryEntry{
+			{Name: "A", Group: "OLD"},
+			{Name: "B", Group: "DESTINO"},
+		},
+		groupColors:          map[string]string{"OLD": "#000000", "DESTINO": "#123456"},
+		groupColorsPath:      filepath.Join(dir, "groups.json"),
+		path:                 filepath.Join(dir, "memories.json"),
+		selectedGroup:        "OLD",
+		pendingOriginalGroup: "OLD",
+		pendingGroup:         "OLD",
+		pendingMoveGroup:     "DESTINO",
+		pendingGroupScan:     true,
+	}
+	panel.commitGroupColor()
+	if panel.memories[0].Group != "DESTINO" || panel.selectedGroup != "DESTINO" {
+		t.Fatalf("las memorias no se movieron al grupo existente: %+v", panel)
+	}
+	if panel.groupColors["DESTINO"] != "#123456" {
+		t.Fatal("mover memorias no debe sustituir el color del grupo de destino")
+	}
+}

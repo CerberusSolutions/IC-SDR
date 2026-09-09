@@ -3,12 +3,14 @@ package screens
 import (
 	"encoding/binary"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
 
 func TestAudioRecorderWritesValidWAV(t *testing.T) {
 	recorder := newAudioRecorder(t.TempDir())
+	recorder.SetFormat(recorderFormatWAV)
 	recorder.Configure(446_093_750, "PMR446", "NFM")
 	recorder.Start()
 	recorder.Submit([]float32{0, .25, -.25, .5, -.5}, false, true)
@@ -46,6 +48,39 @@ func TestAudioRecorderWritesValidWAV(t *testing.T) {
 	if len(recorder.State().RecentFiles) != 0 {
 		recorder.Close()
 		t.Fatal("deleted recording remains in recent list")
+	}
+	recorder.Close()
+}
+
+func TestAudioRecorderWritesMP3WithoutExternalEncoder(t *testing.T) {
+	recorder := newAudioRecorder(t.TempDir())
+	recorder.SetFormat(recorderFormatMP3)
+	recorder.Configure(145_800_000, "SAT", "FM")
+	recorder.Start()
+	recorder.Submit(make([]float32, 2400), false, true)
+	recorder.Stop()
+	deadline := time.Now().Add(3 * time.Second)
+	for len(recorder.State().RecentFiles) == 0 && time.Now().Before(deadline) {
+		time.Sleep(time.Millisecond)
+	}
+	state := recorder.State()
+	if len(state.RecentFiles) != 1 {
+		recorder.Close()
+		t.Fatal("MP3 recording was not finalized")
+	}
+	path := state.RecentFiles[0]
+	data, err := os.ReadFile(path)
+	if err != nil {
+		recorder.Close()
+		t.Fatal(err)
+	}
+	if filepath.Ext(path) != ".mp3" || len(data) < 4 || data[0] != 0xff || data[1]&0xe0 != 0xe0 {
+		recorder.Close()
+		t.Fatalf("invalid MP3 output %q (%d bytes)", path, len(data))
+	}
+	if matches, _ := filepath.Glob(path + ".wav.part"); len(matches) != 0 {
+		recorder.Close()
+		t.Fatal("temporary WAV was not removed")
 	}
 	recorder.Close()
 }

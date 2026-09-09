@@ -23,7 +23,6 @@ type UtilitiesSidebar struct {
 	scanMem   *simpleui.Button
 	groupPick *simpleui.Dropdown
 	groupEdit *simpleui.Button
-	groupMore *simpleui.Button
 	previous  *simpleui.Button
 	next      *simpleui.Button
 	recall    *simpleui.Button
@@ -46,7 +45,7 @@ func NewUtilitiesSidebar(screen *MainScreen) *UtilitiesSidebar {
 		return b
 	}
 	p.scan = button("utilityScan", "INICIAR", 24, 339, 150, 34, screen.scanPanel.ToggleRunning)
-	p.scanLayer = simpleui.NewSwitch("utilityScanLayer", 230, 237, 104, 28, "CAPA FFT", true, 11)
+	p.scanLayer = simpleui.NewSwitch("utilityScanLayer", 170, 237, 164, 28, "MOSTRAR EN FFT", true, 11)
 	p.scanLayer.SetTrackColors(colors.panelAlt, colors.green)
 	p.scanLayer.OnChange(func(active bool) { screen.scanPanel.overlayVisible = active })
 	p.controls = append(p.controls, p.scanLayer)
@@ -74,8 +73,7 @@ func NewUtilitiesSidebar(screen *MainScreen) *UtilitiesSidebar {
 		screen.memoryPanel.selectedGroup, screen.memoryPanel.selected, screen.memoryPanel.scrollOffset = group, -1, 0
 	})
 	p.controls = append(p.controls, p.groupPick)
-	p.groupEdit = button("utilityMemoryGroupEdit", "✎", 250, 442, 40, 32, screen.memoryPanel.openGroupModal)
-	p.groupMore = button("utilityMemoryGroupMore", "⋮", 296, 442, 38, 32, screen.memoryPanel.openGroupModal)
+	p.groupEdit = button("utilityMemoryGroupEdit", "EDITAR", 250, 442, 84, 32, screen.memoryPanel.openGroupModal)
 	p.previous = button("utilityMemoryPrevious", "◄", 24, 700, 48, 31, func() { p.moveMemory(-1) })
 	p.next = button("utilityMemoryNext", "►", 78, 700, 48, 31, func() { p.moveMemory(1) })
 	p.recall = button("utilityMemoryRecall", "SINTONIZAR", 182, 700, 152, 31, screen.memoryPanel.tuneSelected)
@@ -126,7 +124,6 @@ func (p *UtilitiesSidebar) Draw() {
 	memory := p.screen.memoryPanel
 	canEditGroup := memory.selectedGroup != "" && memory.selectedGroup != "TODAS" && memory.selectedGroup != "SIN GRUPO"
 	p.groupEdit.SetEnabled(canEditGroup)
-	p.groupMore.SetEnabled(canEditGroup)
 	if !slices.Equal(p.groupPick.Items(), memory.groups) {
 		p.groupPick.SetItems(memory.groups)
 	}

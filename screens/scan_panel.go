@@ -559,10 +559,12 @@ func drawScanTag(text string, x, y float32) {
 }
 func (p *ScanPanel) drawCompact(x, y float32) {
 	bounds := rl.Rectangle{X: x, Y: y, Width: 315, Height: 28}
-	rl.DrawRectangleRounded(bounds, .2, 6, rl.Color{R: 8, G: 18, B: 24, A: 240})
+	background := rl.Color{R: 8, G: 18, B: 24, A: 240}
+	rl.DrawRectangleRounded(bounds, .2, 6, background)
 	rl.DrawRectangleRoundedLinesEx(bounds, .2, 6, 1, colors.cyan)
 	rl.DrawCircle(int32(x+15), int32(y+14), 5, colors.green)
-	simpleui.DrawTextStyled("SCAN  ·  "+p.status, x+29, y+6, 12, simpleui.FontSemiBold, colors.text)
+	textColor := simpleui.EnsureTextContrast(colors.text, background)
+	simpleui.DrawTextStyled("SCAN  ·  "+p.status, x+29, y+6, 12, simpleui.FontSemiBold, textColor)
 	if rl.IsMouseButtonPressed(rl.MouseButtonLeft) && rl.CheckCollisionPointRec(simpleui.MousePosition(), bounds) {
 		p.screen.uiSounds.PlayToolSelect()
 		p.screen.selectTool("SCAN")

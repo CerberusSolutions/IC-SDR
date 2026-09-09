@@ -29,6 +29,7 @@ var toolMenuItems = []toolMenuItem{
 	{id: "AIS", label: "AIS", icon: "menu-ais.png", row: 1},
 	{id: "AIRCRAFT", label: "ADS-B", icon: "menu-aircraft.png", row: 1},
 	{id: "TETRA", label: "TETRA", icon: "menu-tetra.png", row: 1},
+	{id: "SATELLITES", label: "SATÉLITES", row: 2},
 }
 
 type ToolMenu struct {
@@ -104,11 +105,12 @@ func (menu *ToolMenu) DrawOverlay() {
 	rl.DrawRectangleRounded(modal, .018, 8, colors.panel)
 	rl.DrawRectangleRoundedLinesEx(modal, .018, 8, 2, colors.border)
 	rl.DrawRectangle(192, 57, 896, 55, colors.panelAlt)
-	simpleui.DrawTextStyled("MENU", 592, 71, 22, simpleui.FontSemiBold, colors.text)
+	simpleui.DrawTextStyled("MENU", 588, 67, 27, simpleui.FontSemiBold, colors.text)
 	rl.DrawLine(210, 112, 1070, 112, rl.Color{R: 75, G: 75, B: 75, A: 255})
 
 	menu.drawCategory(0, "VIEWS", colors.cyan)
 	menu.drawCategory(1, "DECODERS", rl.Color{R: 155, G: 115, B: 225, A: 255})
+	menu.drawCategory(2, "UTILES", rl.Color{R: 235, G: 165, B: 45, A: 255})
 	for index := range toolMenuItems {
 		menu.drawItem(index)
 	}
@@ -119,13 +121,14 @@ func (menu *ToolMenu) DrawOverlay() {
 	}
 	rl.DrawRectangleRounded(back, .2, 8, backColor)
 	rl.DrawRectangleRoundedLinesEx(back, .2, 8, 2, rl.Color{R: 130, G: 145, B: 160, A: 255})
-	drawCentered("VOLVER", back, 15, simpleui.EnsureTextContrast(colors.text, backColor))
+	drawCenteredStyled("VOLVER", back, 17, simpleui.FontSemiBold, simpleui.EnsureTextContrast(colors.text, backColor))
 }
 
 func (menu *ToolMenu) drawCategory(row int, label string, accent rl.Color) {
 	y := []float32{124, 262, 540}[row]
-	simpleui.DrawText(label, 220, y-5, 9, accent)
-	rl.DrawLine(280, int32(y), 1060, int32(y), rl.Color{R: accent.R, G: accent.G, B: accent.B, A: 110})
+	simpleui.DrawTextStyled(label, 220, y-8, 13, simpleui.FontSemiBold, accent)
+	labelWidth := simpleui.MeasureTextStyled(label, 13, simpleui.FontSemiBold).X
+	rl.DrawLine(int32(232+labelWidth), int32(y), 1060, int32(y), rl.Color{R: accent.R, G: accent.G, B: accent.B, A: 110})
 }
 
 func (menu *ToolMenu) drawItem(index int) {
@@ -153,26 +156,26 @@ func (menu *ToolMenu) drawItem(index int) {
 		destination := rl.Rectangle{X: center.X, Y: center.Y, Width: 76, Height: 68}
 		rl.DrawTexturePro(texture, source, destination, rl.Vector2{X: 38, Y: 34}, 0, rl.White)
 	} else {
-		menu.drawCustomIcon(item.id, center, active)
+		menu.drawCustomIcon(item.id, center, active, item.row)
 	}
 	textColor := simpleui.EnsureTextContrast(colors.text, fill)
 	if active {
 		textColor = accent
 	}
-	labelSize := int32(15)
+	labelSize := int32(17)
 	if bounds.Width < 130 {
-		labelSize = 13
+		labelSize = 15
 	}
-	drawCentered(item.label, rl.Rectangle{X: bounds.X, Y: bounds.Y + 76, Width: bounds.Width, Height: 26}, labelSize, textColor)
+	drawCenteredStyled(item.label, rl.Rectangle{X: bounds.X, Y: bounds.Y + 75, Width: bounds.Width, Height: 27}, labelSize, simpleui.FontSemiBold, textColor)
 	if active {
 		rl.DrawRectangleRounded(rl.Rectangle{X: bounds.X + 25, Y: bounds.Y + bounds.Height - 6, Width: bounds.Width - 50, Height: 3}, 1, 4, accent)
 	}
 }
 
-func (menu *ToolMenu) drawCustomIcon(id string, center rl.Vector2, active bool) {
+func (menu *ToolMenu) drawCustomIcon(id string, center rl.Vector2, active bool, row int) {
 	accent := colors.cyan
 	if active {
-		accent = menu.rowAccent(1)
+		accent = menu.rowAccent(row)
 	}
 	switch id {
 	case "RADIOSONDE":
@@ -197,6 +200,15 @@ func (menu *ToolMenu) drawCustomIcon(id string, center rl.Vector2, active bool) 
 		rl.DrawCircleLines(int32(center.X+19), int32(center.Y-7), 13, colors.muted)
 		rl.DrawLine(int32(center.X-19), int32(center.Y+6), int32(center.X+19), int32(center.Y+6), colors.orange)
 		rl.DrawCircle(int32(center.X+29), int32(center.Y+20), 6, colors.red)
+	case "SATELLITES":
+		// A compact orbital mark that remains crisp in every palette and avoids
+		// adding another bitmap asset before the satellite tool is implemented.
+		rl.DrawEllipseLines(int32(center.X), int32(center.Y), 36, 17, accent)
+		rl.DrawEllipseLines(int32(center.X), int32(center.Y), 17, 36, colors.muted)
+		rl.DrawCircle(int32(center.X), int32(center.Y), 10, accent)
+		rl.DrawRectangle(int32(center.X-25), int32(center.Y-5), 12, 10, colors.blue)
+		rl.DrawRectangle(int32(center.X+13), int32(center.Y-5), 12, 10, colors.blue)
+		rl.DrawCircle(int32(center.X+31), int32(center.Y-17), 4, colors.orange)
 	default:
 		drawCentered("?", rl.Rectangle{X: center.X - 30, Y: center.Y - 25, Width: 60, Height: 50}, 24, accent)
 	}
@@ -279,8 +291,13 @@ func (menu *ToolMenu) rowAccent(row int) rl.Color {
 }
 
 func drawCentered(text string, bounds rl.Rectangle, size int32, color rl.Color) {
-	measured := simpleui.MeasureTextStyled(text, size, simpleui.FontRegular)
-	simpleui.DrawText(text, bounds.X+(bounds.Width-measured.X)/2, bounds.Y+(bounds.Height-measured.Y)/2, size, color)
+	drawCenteredStyled(text, bounds, size, simpleui.FontRegular, color)
+
+}
+
+func drawCenteredStyled(text string, bounds rl.Rectangle, size int32, style simpleui.FontStyle, color rl.Color) {
+	measured := simpleui.MeasureTextStyled(text, size, style)
+	simpleui.DrawTextStyled(text, bounds.X+(bounds.Width-measured.X)/2, bounds.Y+(bounds.Height-measured.Y)/2, size, style, color)
 }
 
 func blendRGBA(from, to rl.Color, amount float32) rl.Color {

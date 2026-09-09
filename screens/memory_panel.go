@@ -246,7 +246,7 @@ func (p *MemoryPanel) openGroupModal() {
 	if p.selectedGroup == "" || p.selectedGroup == "TODAS" || p.selectedGroup == "SIN GRUPO" {
 		return
 	}
-	p.pendingOriginalGroup, p.pendingGroup = p.selectedGroup, p.selectedGroup
+	p.pendingOriginalGroup, p.pendingGroup, p.pendingMoveGroup = p.selectedGroup, p.selectedGroup, ""
 	p.pendingGroupScan, p.pendingGroupPriority = true, false
 	for _, memory := range p.memories {
 		if memoryGroup(memory) == p.selectedGroup {
@@ -272,25 +272,28 @@ func (p *MemoryPanel) commitGroupColor() {
 	if original == "" {
 		original = name
 	}
-	if p.pendingMoveGroup != "" {
-		name = p.pendingMoveGroup
-	}
 	if name == "" || strings.EqualFold(name, "TODAS") || strings.EqualFold(name, "SIN GRUPO") {
 		p.editError = "Introduce un nombre de grupo válido."
 		return
 	}
-	if !strings.EqualFold(name, p.pendingOriginalGroup) && p.groupExists(name) {
+	if p.pendingMoveGroup == "" && !strings.EqualFold(name, p.pendingOriginalGroup) && p.groupExists(name) {
 		p.editError = "Ya existe un grupo con ese nombre."
 		return
 	}
+	destination := name
+	if p.pendingMoveGroup != "" {
+		destination = p.pendingMoveGroup
+	}
 	for i := range p.memories {
 		if memoryGroup(p.memories[i]) == original {
-			p.memories[i].Group, p.memories[i].ScanEnabled, p.memories[i].Priority = name, p.pendingGroupScan, p.pendingGroupPriority
+			p.memories[i].Group, p.memories[i].ScanEnabled, p.memories[i].Priority = destination, p.pendingGroupScan, p.pendingGroupPriority
 		}
 	}
 	delete(p.groupColors, original)
-	p.groupColors[name] = colorHex(memoryGroupPalette[p.pendingGroupColor])
-	p.selectedGroup = name
+	if p.pendingMoveGroup == "" {
+		p.groupColors[destination] = colorHex(memoryGroupPalette[p.pendingGroupColor])
+	}
+	p.selectedGroup = destination
 	p.save()
 	p.rebuildGroups()
 	p.saveGroupColors()
@@ -312,7 +315,7 @@ func (p *MemoryPanel) deleteEditedGroup() {
 }
 
 func (p *MemoryPanel) moveEditedGroup() {
-	targets := []string{"SIN GRUPO"}
+	targets := []string{"", "SIN GRUPO"}
 	for _, group := range p.groups {
 		if group != "TODAS" && group != p.pendingOriginalGroup && group != "SIN GRUPO" {
 			targets = append(targets, group)
@@ -943,7 +946,7 @@ func (p *MemoryPanel) drawGroupModalContent() {
 	}
 	drawGroupToggle(rl.Rectangle{X: 500, Y: 450, Width: 285, Height: 42}, "INCLUIR EN ESCÁNER", p.pendingGroupScan)
 	drawGroupToggle(rl.Rectangle{X: 815, Y: 450, Width: 285, Height: 42}, "PRIORIDAD", p.pendingGroupPriority)
-	moveLabel := "MOVER MEMORIAS"
+	moveLabel := "NO MOVER"
 	if p.pendingMoveGroup != "" {
 		moveLabel = "MOVER A: " + p.pendingMoveGroup
 	}
@@ -1393,8 +1396,10 @@ func (p *MemoryPanel) visibleMarkerIndices() []int {
 	low := p.screen.centerFrequencyHz - p.screen.spanHz/2
 	high := low + p.screen.spanHz
 	for i, memory := range p.memories {
-		groupMatches := p.selectedGroup == "TODAS" || memoryGroup(memory) == p.selectedGroup
-		if groupMatches && (!p.onlyActive || memory.ScanEnabled) && memory.FrequencyHz >= low && memory.FrequencyHz <= high {
+		// The group and active-only choices belong to the memory table. The FFT
+		// layer is controlled exclusively by MEM VIEW and therefore includes
+		// every stored memory that falls inside the displayed span.
+		if memory.FrequencyHz >= low && memory.FrequencyHz <= high {
 			visible = append(visible, i)
 		}
 	}

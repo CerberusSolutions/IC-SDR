@@ -142,6 +142,7 @@ type MainScreen struct {
 	recorder               *AudioRecorder
 	recorderPanel          *RecorderPanel
 	recorderSkipSilence    bool
+	recorderFormat         string
 	demodBandwidthHz       int
 	activeTool             string
 	viewMode               int
@@ -161,6 +162,7 @@ type MainScreen struct {
 	radiosondePanel        *RadiosondePanel
 	aisPanel               *AISPanel
 	aircraftPanel          *AircraftPanel
+	satellitePanel         *SatellitePanel
 	radiosondeFamily       string
 	radiosondeFrequencyHz  int64
 	sstvPanel              *SSTVPanel
@@ -220,6 +222,7 @@ func NewMainScreen(receiver *sdr.Receiver) *MainScreen {
 		fftPeakDecay:           3,
 		fftWindow:              "HANN",
 		memoryViewEnabled:      true,
+		recorderFormat:         recorderFormatMP3,
 		scanResume:             "DELAY",
 		scanPolicy:             "CURRENT",
 		scanDwellMs:            3000,
@@ -399,6 +402,7 @@ func (screen *MainScreen) CreateControls() {
 	screen.radiosondePanel = NewRadiosondePanel(screen)
 	screen.aisPanel = NewAISPanel(screen)
 	screen.aircraftPanel = NewAircraftPanel(screen)
+	screen.satellitePanel = NewSatellitePanel(screen)
 	screen.sstvPanel = NewSSTVPanel(screen)
 	screen.tetraPanel = NewTETRAPanel(screen)
 	if screen.rtl433FrequencyHz >= 1_000 {
@@ -412,6 +416,7 @@ func (screen *MainScreen) CreateControls() {
 	}
 	screen.recorder = NewAudioRecorder()
 	screen.recorder.SetSkipSquelchSilence(screen.recorderSkipSilence)
+	screen.recorder.SetFormat(screen.recorderFormat)
 	screen.audioPlayer.SetRecorder(screen.recorder)
 	screen.recorderPanel = NewRecorderPanel(screen, screen.recorder)
 	screen.utilitiesSidebar = NewUtilitiesSidebar(screen)
@@ -430,6 +435,7 @@ func (screen *MainScreen) CreateControls() {
 	compactToolControls(screen.radiosondePanel.controls)
 	compactToolControls(screen.aisPanel.controls)
 	compactToolControls(screen.aircraftPanel.controls)
+	compactToolControls(screen.satellitePanel.controls)
 	compactToolControls(screen.sstvPanel.controls)
 
 	for _, element := range []simpleui.Element{
@@ -474,6 +480,9 @@ func (screen *MainScreen) CreateControls() {
 	for _, element := range screen.aircraftPanel.controls {
 		simpleui.Add(element)
 	}
+	for _, element := range screen.satellitePanel.controls {
+		simpleui.Add(element)
+	}
 	for _, element := range screen.sstvPanel.controls {
 		simpleui.Add(element)
 	}
@@ -508,6 +517,9 @@ func (screen *MainScreen) CreateControls() {
 	}
 	if screen.activeTool == "AIRCRAFT" {
 		screen.aircraftPanel.Enter()
+	}
+	if screen.activeTool == "SATELLITES" {
+		screen.satellitePanel.Enter()
 	}
 	if screen.activeTool == "APRS" {
 		screen.aprsPanel.Enter()
@@ -564,6 +576,9 @@ func (screen *MainScreen) Draw() {
 	}
 	if screen.aircraftPanel != nil {
 		screen.aircraftPanel.Tick()
+	}
+	if screen.satellitePanel != nil {
+		screen.satellitePanel.Tick()
 	}
 	if screen.aprsPanel != nil {
 		screen.aprsPanel.Tick()
@@ -632,6 +647,9 @@ func (screen *MainScreen) Close() {
 	}
 	if screen.tetraPanel != nil {
 		screen.tetraPanel.Close()
+	}
+	if screen.satellitePanel != nil {
+		screen.satellitePanel.Close()
 	}
 }
 
@@ -790,14 +808,14 @@ func drawCompactAudioMeter(x, y, width, height, db float32) {
 
 func (screen *MainScreen) drawSquelchPanel() {
 	panel := rl.Rectangle{X: 960, Y: 16, Width: 296, Height: 134}
-	rl.DrawRectangleRounded(panel, .06, 8, rl.Color{R: 12, G: 16, B: 22, A: 255})
-	rl.DrawRectangleRoundedLinesEx(panel, .06, 8, 1.5, rl.Color{R: 58, G: 76, B: 96, A: 255})
+	rl.DrawRectangleRounded(panel, .06, 8, colors.panel)
+	rl.DrawRectangleRoundedLinesEx(panel, .06, 8, 1.5, colors.border)
 
 	timelineX, timelineY, timelineWidth := float32(972), float32(64), float32(272)
 	total := max(screen.squelchHoldMs+screen.squelchCloseMs, 1)
 	holdWidth := timelineWidth * float32(screen.squelchHoldMs) / float32(total)
-	rl.DrawRectangleRounded(rl.Rectangle{X: timelineX, Y: timelineY, Width: holdWidth, Height: 9}, .4, 6, rl.Color{R: 54, G: 47, B: 34, A: 255})
-	rl.DrawRectangleRounded(rl.Rectangle{X: timelineX + holdWidth, Y: timelineY, Width: timelineWidth - holdWidth, Height: 9}, .4, 6, rl.Color{R: 58, G: 35, B: 38, A: 255})
+	rl.DrawRectangleRounded(rl.Rectangle{X: timelineX, Y: timelineY, Width: holdWidth, Height: 9}, .4, 6, mixColor(colors.panelAlt, colors.orange, .18))
+	rl.DrawRectangleRounded(rl.Rectangle{X: timelineX + holdWidth, Y: timelineY, Width: timelineWidth - holdWidth, Height: 9}, .4, 6, mixColor(colors.panelAlt, colors.red, .18))
 	if screen.squelchEnabled {
 		rl.DrawRectangleRounded(rl.Rectangle{X: timelineX, Y: timelineY, Width: holdWidth, Height: 9}, .4, 6, colors.orange)
 	}
@@ -807,8 +825,8 @@ func (screen *MainScreen) drawSquelchPanel() {
 	simpleui.DrawTextStyled(closeText, timelineX+timelineWidth-closeWidth, timelineY-17, 9, simpleui.FontSemiBold, colors.red)
 
 	dock := rl.Rectangle{X: 960, Y: 156, Width: 296, Height: 34}
-	rl.DrawRectangleRounded(dock, .2, 6, rl.Color{R: 12, G: 16, B: 22, A: 255})
-	rl.DrawRectangleRoundedLinesEx(dock, .2, 6, 1, rl.Color{R: 55, G: 70, B: 88, A: 255})
+	rl.DrawRectangleRounded(dock, .2, 6, colors.panel)
+	rl.DrawRectangleRoundedLinesEx(dock, .2, 6, 1, colors.border)
 	rl.DrawLine(1105, 160, 1105, 186, colors.border)
 }
 
@@ -1048,6 +1066,8 @@ func (screen *MainScreen) drawLowerWorkspace() {
 			screen.aprsPanel.DrawPanel()
 		} else if screen.activeTool == "SSTV" {
 			screen.sstvPanel.DrawPanel()
+		} else if screen.activeTool == "SATELLITES" {
+			screen.satellitePanel.DrawPanel()
 		} else {
 			drawSmallText(toolDisplayName(screen.activeTool), 40, toolY+14, colors.cyan)
 			simpleui.DrawText("Esta herramienta se implementará en la siguiente fase. Pulsa MENU para cambiar de tool.", 40, toolY+48, 10, colors.muted)
@@ -1197,6 +1217,9 @@ func (screen *MainScreen) selectTool(tool string) {
 	if previous == "TETRA" && tool != "TETRA" && screen.tetraPanel != nil {
 		screen.tetraPanel.Leave()
 	}
+	if previous == "SATELLITES" && tool != "SATELLITES" && screen.satellitePanel != nil {
+		screen.satellitePanel.Leave()
+	}
 	// A tool can be selected while VIEW 2 is active and while the menu owns the
 	// mouse release. Discard any gesture begun on the old geometry, then publish
 	// the new tool before restoring VIEW 1 so visibility is calculated from the
@@ -1304,6 +1327,12 @@ func (screen *MainScreen) selectTool(tool string) {
 			screen.tetraPanel.Enter()
 		}
 	}
+	if screen.satellitePanel != nil {
+		screen.satellitePanel.SetVisible(tool == "SATELLITES")
+		if tool == "SATELLITES" && previous != "SATELLITES" {
+			screen.satellitePanel.Enter()
+		}
+	}
 	screen.markSettingsDirty()
 	screen.markSettingsDirty()
 }
@@ -1363,6 +1392,9 @@ func (screen *MainScreen) setViewMode(mode int) {
 	}
 	if screen.tetraPanel != nil {
 		screen.tetraPanel.SetVisible(showTool && screen.activeTool == "TETRA")
+	}
+	if screen.satellitePanel != nil {
+		screen.satellitePanel.SetVisible(showTool && screen.activeTool == "SATELLITES")
 	}
 	screen.markSettingsDirty()
 }
