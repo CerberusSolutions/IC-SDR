@@ -4,20 +4,29 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
+	"go-zero/internal/i18n"
 	"go-zero/internal/radiosonde"
 	"go-zero/internal/resources"
 	"go-zero/internal/sdr"
 )
 
-const appSettingsVersion = 1
+// appSettingsVersion 2 replaced the Spanish aprsView identifiers with
+// language-neutral ones. Version 1 files are still read and migrated, so an
+// existing installation keeps its settings across the upgrade.
+const (
+	appSettingsVersion       = 2
+	appSettingsLegacyVersion = 1
+)
 
 type persistedAppSettings struct {
 	RadiosondeFamily      string                `json:"radiosondeFamily,omitempty"`
 	RadiosondeFrequencyHz int64                 `json:"radiosondeFrequencyHz,omitempty"`
 	Version               int                   `json:"version"`
+	Language              string                `json:"language,omitempty"`
 	Theme                 string                `json:"theme,omitempty"`
 	BandCategory          string                `json:"bandCategory"`
 	BandName              string                `json:"bandName"`
@@ -73,14 +82,33 @@ func defaultAppSettingsPath() string {
 	return resources.WritablePath("config", "settings.json")
 }
 
+// StartupLanguage resolves the interface language before the main screen
+// exists, so start-up diagnostics are already written in the right language.
+// A saved choice wins; otherwise the operating system's locale decides.
+func StartupLanguage() i18n.Language {
+	data, err := os.ReadFile(defaultAppSettingsPath())
+	if err != nil {
+		return i18n.DetectSystemLanguage()
+	}
+	var settings persistedAppSettings
+	if json.Unmarshal(data, &settings) != nil || settings.Language == "" {
+		return i18n.DetectSystemLanguage()
+	}
+	return i18n.Parse(settings.Language)
+}
+
 func loadAppSettings(path string, screen *MainScreen) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return
 	}
 	var settings persistedAppSettings
-	if json.Unmarshal(data, &settings) != nil || settings.Version != appSettingsVersion {
+	if json.Unmarshal(data, &settings) != nil || (settings.Version != appSettingsVersion && settings.Version != appSettingsLegacyVersion) {
 		return
+	}
+	if settings.Language != "" {
+		screen.language = i18n.Parse(settings.Language)
+		i18n.Set(screen.language)
 	}
 	if validTheme(settings.Theme) {
 		screen.themeName = strings.ToUpper(settings.Theme)
@@ -205,7 +233,10 @@ func loadAppSettings(path string, screen *MainScreen) {
 	if settings.RTL433BandwidthHz == 250_000 || settings.RTL433BandwidthHz == 500_000 || settings.RTL433BandwidthHz == 1_000_000 || settings.RTL433BandwidthHz == 2_000_000 {
 		screen.rtl433BandwidthHz = settings.RTL433BandwidthHz
 	}
-	if settings.APRSView == "PAQUETES" || settings.APRSView == "ESTACIONES" || settings.APRSView == "MENSAJES" || settings.APRSView == "RADAR" || settings.APRSView == "RAW" {
+	if view, legacy := legacyAPRSViews[settings.APRSView]; legacy {
+		settings.APRSView = view
+	}
+	if slices.Contains(aprsViews, settings.APRSView) {
 		screen.aprsView = settings.APRSView
 	}
 	if settings.SubtoneMode == "AUTO" || settings.SubtoneMode == "CTCSS" || settings.SubtoneMode == "DCS" || settings.SubtoneMode == "OFF" {
@@ -247,6 +278,7 @@ func (screen *MainScreen) flushSettings(force bool) {
 	}
 	settings := persistedAppSettings{
 		Version:      appSettingsVersion,
+		Language:     string(screen.language),
 		Theme:        screen.themeName,
 		BandCategory: screen.bandCategory, BandName: screen.bandName,
 		Mode: mode, FrequencyHz: screen.frequencyHz, CenterFrequencyHz: screen.centerFrequencyHz,

@@ -1,9 +1,10 @@
 package tetra
 
 import (
-	"fmt"
 	"syscall"
 	"unsafe"
+
+	"go-zero/internal/i18n"
 )
 
 type voiceDecoder struct {
@@ -20,7 +21,7 @@ func newVoiceDecoder(path string) *voiceDecoder {
 	}
 	dll := syscall.NewLazyDLL(path)
 	if err := dll.Load(); err != nil {
-		v.errText = fmt.Sprintf("NO CARGA (%v)", err)
+		v.errText = i18n.Tf("NO CARGA (%v)", err)
 		return v
 	}
 	v.init, v.cdec, v.sdec = dll.NewProc("tetra_decode_init"), dll.NewProc("tetra_cdec"), dll.NewProc("tetra_sdec")

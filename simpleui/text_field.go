@@ -132,7 +132,7 @@ func (field *TextField) Draw() {
 	rl.BeginScissorMode(int32(clip.X), int32(clip.Y), int32(max(0, clip.Width)), int32(max(0, clip.Height)))
 	defer rl.EndScissorMode()
 
-	textY := bounds.Y + (bounds.Height-MeasureTextStyled("Ag", field.fontSize, field.font).Y)*0.5
+	textY := bounds.Y + (bounds.Height-MeasureTextStyledRaw("Ag", field.fontSize, field.font).Y)*0.5
 	textX := bounds.X + padding - field.scrollX
 	if len(field.text) == 0 && !field.focused {
 		DrawTextStyled(field.placeholder, textX, textY, field.fontSize, field.font, theme.TextMuted)
@@ -144,7 +144,7 @@ func (field *TextField) Draw() {
 	if !field.Enabled() {
 		textColor = theme.TextMuted
 	}
-	DrawTextStyled(field.Text(), textX, textY, field.fontSize, field.font, textColor)
+	DrawTextStyledRaw(field.Text(), textX, textY, field.fontSize, field.font, textColor)
 	field.drawCaret(textX, textY)
 }
 
@@ -333,8 +333,8 @@ func (field *TextField) indexAt(pointerX float32) int {
 		return 0
 	}
 	for index := 1; index <= len(field.text); index++ {
-		previous := MeasureTextStyled(string(field.text[:index-1]), field.fontSize, field.font).X
-		current := MeasureTextStyled(string(field.text[:index]), field.fontSize, field.font).X
+		previous := MeasureTextStyledRaw(string(field.text[:index-1]), field.fontSize, field.font).X
+		current := MeasureTextStyledRaw(string(field.text[:index]), field.fontSize, field.font).X
 		if localX < (previous+current)*0.5 {
 			return index - 1
 		}
@@ -347,14 +347,14 @@ func (field *TextField) ensureCursorVisible() {
 		return
 	}
 	visibleWidth := max(1, field.Bounds().Width-field.padding()*2)
-	cursorX := MeasureTextStyled(string(field.text[:field.cursor]), field.fontSize, field.font).X
+	cursorX := MeasureTextStyledRaw(string(field.text[:field.cursor]), field.fontSize, field.font).X
 	if cursorX-field.scrollX > visibleWidth {
 		field.scrollX = cursorX - visibleWidth
 	}
 	if cursorX-field.scrollX < 0 {
 		field.scrollX = cursorX
 	}
-	textWidth := MeasureTextStyled(field.Text(), field.fontSize, field.font).X
+	textWidth := MeasureTextStyledRaw(field.Text(), field.fontSize, field.font).X
 	field.scrollX = max(0, min(field.scrollX, max(0, textWidth-visibleWidth)))
 }
 
@@ -363,9 +363,9 @@ func (field *TextField) drawSelection(textX, textY float32) {
 		return
 	}
 	start, end := field.selection()
-	left := MeasureTextStyled(string(field.text[:start]), field.fontSize, field.font).X
-	right := MeasureTextStyled(string(field.text[:end]), field.fontSize, field.font).X
-	height := MeasureTextStyled("Ag", field.fontSize, field.font).Y
+	left := MeasureTextStyledRaw(string(field.text[:start]), field.fontSize, field.font).X
+	right := MeasureTextStyledRaw(string(field.text[:end]), field.fontSize, field.font).X
+	height := MeasureTextStyledRaw("Ag", field.fontSize, field.font).Y
 	rl.DrawRectangleRec(rl.Rectangle{X: textX + left, Y: textY, Width: right - left, Height: height}, currentTheme.InputSelection)
 }
 
@@ -373,8 +373,8 @@ func (field *TextField) drawCaret(textX, textY float32) {
 	if !field.focused || field.hasSelection() || int((rl.GetTime()-field.lastBlinkTime)*2)%2 != 0 {
 		return
 	}
-	x := textX + MeasureTextStyled(string(field.text[:field.cursor]), field.fontSize, field.font).X
-	height := MeasureTextStyled("Ag", field.fontSize, field.font).Y
+	x := textX + MeasureTextStyledRaw(string(field.text[:field.cursor]), field.fontSize, field.font).X
+	height := MeasureTextStyledRaw("Ag", field.fontSize, field.font).Y
 	rl.DrawLineEx(rl.Vector2{X: x, Y: textY}, rl.Vector2{X: x, Y: textY + height}, 2, currentTheme.InputCaret)
 }
 

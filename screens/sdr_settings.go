@@ -8,6 +8,8 @@ import (
 	"go-zero/simpleui"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
+
+	"go-zero/internal/i18n"
 )
 
 // SDRSettings is a modal editor for the controls exported by the active receiver.
@@ -164,7 +166,7 @@ func (modal *SDRSettings) submit() {
 
 func (modal *SDRSettings) refresh() {
 	settings := modal.current
-	modal.deviceLabel.SetText(settings.Device + "   DRIVER " + settings.Driver)
+	modal.deviceLabel.SetText(settings.Device + i18n.T("   DRIVER ") + settings.Driver)
 	modal.agc.SetActive(settings.AGC)
 	modal.biasT.SetActive(settings.BiasT)
 	modal.rfNotch.SetActive(settings.RFNotch)
@@ -183,12 +185,12 @@ func (modal *SDRSettings) refresh() {
 }
 
 func (modal *SDRSettings) refreshLabels() {
-	modal.rfLabel.SetText(fmt.Sprintf("LNA / RFGR   ESTADO %.0f", modal.current.RFGain))
+	modal.rfLabel.SetText(i18n.Tf("LNA / RFGR   ESTADO %.0f", modal.current.RFGain))
 	ifText := fmt.Sprintf("IFGR   %.0f dB", modal.current.IFGain)
 	if modal.current.AGC {
 		ifText += "   (CONTROLADO POR AGC)"
 	}
 	modal.ifLabel.SetText(ifText)
-	modal.ppmLabel.SetText(fmt.Sprintf("CORRECCIÓN DE FRECUENCIA   %.1f ppm", modal.current.PPM))
+	modal.ppmLabel.SetText(i18n.Tf("CORRECCIÓN DE FRECUENCIA   %.1f ppm", modal.current.PPM))
 	modal.setpointLabel.SetText(fmt.Sprintf("AGC SETPOINT   %d dB", modal.current.AGCSetpoint))
 }

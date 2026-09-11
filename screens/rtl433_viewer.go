@@ -11,6 +11,8 @@ import (
 	"go-zero/simpleui"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
+
+	"go-zero/internal/i18n"
 )
 
 // RunRTL433Viewer runs in a second process because raylib owns one native
@@ -31,7 +33,7 @@ func RunRTL433Viewer(snapshotPath string) {
 		if err != nil {
 			v.feedback = "ERROR AL EXPORTAR"
 		} else {
-			v.feedback = "GUARDADO: " + filepath.Base(path)
+			v.feedback = i18n.T("GUARDADO: ") + filepath.Base(path)
 		}
 		v.feedbackUntil = time.Now().Add(3 * time.Second)
 	})
@@ -73,7 +75,7 @@ func (v *rtl433Viewer) draw() {
 	}
 	rl.DrawRectangle(0, 0, 1400, 760, colors.background)
 	simpleui.DrawTextStyled("CAPTURAS RTL_433", 28, 24, 22, simpleui.FontSemiBold, colors.cyan)
-	simpleui.DrawText(fmt.Sprintf("%d dispositivos · actualización en tiempo real", len(v.events)), 28, 54, 13, colors.muted)
+	simpleui.DrawText(i18n.Tf("%d dispositivos · actualización en tiempo real", len(v.events)), 28, 54, 13, colors.muted)
 	if time.Now().Before(v.feedbackUntil) {
 		simpleui.DrawTextStyled(v.feedback, 850, 34, 13, simpleui.FontSemiBold, colors.green)
 	}

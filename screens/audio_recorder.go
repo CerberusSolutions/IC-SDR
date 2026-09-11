@@ -14,6 +14,8 @@ import (
 
 	shinemp3 "github.com/braheezy/shine-mp3/pkg/mp3"
 	"go-zero/internal/resources"
+
+	"go-zero/internal/i18n"
 )
 
 const (
@@ -293,7 +295,7 @@ func (r *AudioRecorder) writeLoop() {
 					completedPath = fallback
 				}
 				r.mu.Lock()
-				r.lastError = "No se pudo crear el MP3; se conservó el WAV: " + err.Error()
+				r.lastError = i18n.T("No se pudo crear el MP3; se conservó el WAV: ") + err.Error()
 				r.mu.Unlock()
 			} else {
 				completedPath = finalPath

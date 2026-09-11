@@ -12,6 +12,8 @@ import (
 	"go-zero/internal/radiosonde"
 	"go-zero/internal/resources"
 	"go-zero/simpleui"
+
+	"go-zero/internal/i18n"
 )
 
 type RadiosondePanel struct {
@@ -153,9 +155,9 @@ func (p *RadiosondePanel) DrawPanel() {
 }
 
 func (p *RadiosondePanel) drawTelemetry(status radiosonde.Status, events []radiosonde.Event) {
-	simpleui.DrawText(fmt.Sprintf("RADIOSONDAS · %.6f MHz · %s · %d tramas · %d bloques perdidos", float64(p.targetHz)/1e6, status.State, len(events), status.Dropped), 40, toolY+7, 12, colors.cyan)
+	simpleui.DrawText(i18n.Tf("RADIOSONDAS · %.6f MHz · %s · %d tramas · %d bloques perdidos", float64(p.targetHz)/1e6, status.State, len(events), status.Dropped), 40, toolY+7, 12, colors.cyan)
 	if status.Error != "" {
-		simpleui.DrawText(sondeClip(status.Error, 72), 1020, toolY+36, 12, colors.red)
+		simpleui.DrawText(sondeClip(i18n.T(status.Error), 72), 1020, toolY+36, 12, colors.red)
 	} else {
 		simpleui.DrawText("Sintoniza con el dial / espectro", 1020, toolY+36, 12, colors.muted)
 	}
@@ -188,7 +190,7 @@ func (p *RadiosondePanel) drawTelemetry(status radiosonde.Status, events []radio
 	if footer == "" {
 		footer = "Últimas sondas · -- = dato no disponible · Historial: últimas 2000 tramas · Altitud según referencia original (JSON/CSV)"
 	}
-	simpleui.DrawText(sondeClip(footer, 180), 40, toolY+172, 12, colors.muted)
+	simpleui.DrawText(sondeClip(i18n.T(footer), 180), 40, toolY+172, 12, colors.muted)
 }
 func sondeClip(s string, n int) string {
 	r := []rune(s)
@@ -242,7 +244,7 @@ func (p *RadiosondePanel) export(asCSV bool) {
 		p.feedback = err.Error()
 		return
 	}
-	p.feedback = "Guardado: " + path
+	p.feedback = i18n.T("Guardado: ") + path
 }
 func sondeCSVNumber(v *float64) string {
 	if v == nil {

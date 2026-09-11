@@ -17,6 +17,8 @@ import (
 	"go-zero/simpleui"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
+
+	"go-zero/internal/i18n"
 )
 
 type RTL433Panel struct {
@@ -146,7 +148,7 @@ func (p *RTL433Panel) selectBandwidth(width int) {
 	p.bandwidthHz = width
 	p.screen.rtl433BandwidthHz = width
 	p.selectFrequency(p.targetHz)
-	p.feedback = "ANCHO " + rtl433WidthLabel(width)
+	p.feedback = i18n.T("ANCHO ") + i18n.T(rtl433WidthLabel(width))
 	p.feedbackUntil = time.Now().Add(2 * time.Second)
 }
 func (p *RTL433Panel) styleWidths() {
@@ -294,7 +296,7 @@ func (p *RTL433Panel) DrawPanel() {
 	}
 	simpleui.DrawTextStyled("RTL_433 · DISPOSITIVOS ISM", 40, 638, 16, simpleui.FontSemiBold, rl.Color{R: 175, G: 145, B: 245, A: 255})
 	simpleui.DrawTextStyled(fmt.Sprintf("%s · %d kS/s · EVENTOS %d · DROP %d", status.State, status.SampleRate/1000, status.Events, status.Dropped), 700, 638, 12, simpleui.FontSemiBold, colors.muted)
-	simpleui.DrawTextStyled(fmt.Sprintf("OBJETIVO %.3f MHz", float64(p.targetHz)/1e6), 1230, 666, 14, simpleui.FontSemiBold, colors.orange)
+	simpleui.DrawTextStyled(i18n.Tf("OBJETIVO %.3f MHz", float64(p.targetHz)/1e6), 1230, 666, 14, simpleui.FontSemiBold, colors.orange)
 	drawPanel(40, 716, 300, 90)
 	simpleui.DrawTextStyled("ANCHO IQ DEL DECODER", 52, 719, 12, simpleui.FontSemiBold, colors.cyan)
 	simpleui.DrawText(rtl433WidthLabel(p.bandwidthHz), 52, 781, 12, colors.text)
@@ -380,7 +382,7 @@ func (p *RTL433Panel) DrawSpectrumOverlay(x, y, w, h float32) {
 		}
 		rangeLow := float64(p.pendingHz-int64(p.bandwidthHz)/2) / 1e6
 		rangeHigh := float64(p.pendingHz+int64(p.bandwidthHz)/2) / 1e6
-		preview := fmt.Sprintf("NUEVO RANGO %.3f–%.3f MHz · %s%s · ESC CANCELA", rangeLow, rangeHigh, sign, formatStep(delta))
+		preview := i18n.Tf("NUEVO RANGO %.3f–%.3f MHz · %s%s · ESC CANCELA", rangeLow, rangeHigh, sign, formatStep(delta))
 		pw := simpleui.MeasureTextStyled(preview, 12, simpleui.FontSemiBold).X
 		px := min(max(cursorX-pw/2, x+8), x+w-pw-8)
 		// A third lane is reserved for the delayed retune preview.
@@ -400,8 +402,8 @@ func drawWrapped(s string, x, y, w float32, size int32, color rl.Color) {
 	line := ""
 	for _, word := range words {
 		next := strings.TrimSpace(line + " " + word)
-		if simpleui.MeasureText(next, size).X > w {
-			simpleui.DrawText(line, x, y, size, color)
+		if simpleui.MeasureTextRaw(next, size).X > w {
+			simpleui.DrawTextRaw(line, x, y, size, color)
 			y += float32(size + 3)
 			line = word
 		} else {
@@ -412,7 +414,7 @@ func drawWrapped(s string, x, y, w float32, size int32, color rl.Color) {
 		}
 	}
 	if line != "" && y <= 795 {
-		simpleui.DrawText(line, x, y, size, color)
+		simpleui.DrawTextRaw(line, x, y, size, color)
 	}
 }
 

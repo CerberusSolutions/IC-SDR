@@ -13,6 +13,8 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"go-zero/internal/satellite"
 	"go-zero/simpleui"
+
+	"go-zero/internal/i18n"
 )
 
 func RunSatelliteMap(path string) {
@@ -125,7 +127,7 @@ func (v *satelliteMap) drawHeader() {
 			visible++
 		}
 	}
-	simpleui.DrawText(fmt.Sprintf("%d objetos · %d visibles desde %s · %s", len(v.snapshot.Satellites), visible, v.snapshot.Station.Name, v.snapshot.Source), 380, 27, 13, colors.muted)
+	simpleui.DrawText(i18n.Tf("%d objetos · %d visibles desde %s · %s", len(v.snapshot.Satellites), visible, v.snapshot.Station.Name, v.snapshot.Source), 380, 27, 13, colors.muted)
 }
 func (v *satelliteMap) grouped() ([]string, map[string][]satellite.State) {
 	m := map[string][]satellite.State{}
@@ -281,7 +283,7 @@ func (v *satelliteMap) drawDetails(b rl.Rectangle) {
 	eye := "BAJO EL HORIZONTE"
 	c := colors.muted
 	if s.Visible {
-		eye = "VISIBLE DESDE " + v.snapshot.Station.Name
+		eye = i18n.T("VISIBLE DESDE ") + v.snapshot.Station.Name
 		c = colors.green
 	}
 	separator := withAlpha(colors.border, 180)
@@ -295,20 +297,20 @@ func (v *satelliteMap) drawDetails(b rl.Rectangle) {
 
 	x := b.X + 304
 	simpleui.DrawText("POSICIÓN ORBITAL", x, b.Y+45, 11, colors.muted)
-	simpleui.DrawText(fmt.Sprintf("Latitud       %.4f°", s.Latitude), x, b.Y+72, 13, colors.text)
-	simpleui.DrawText(fmt.Sprintf("Longitud    %.4f°", s.Longitude), x, b.Y+98, 13, colors.text)
-	simpleui.DrawText(fmt.Sprintf("Altitud       %.0f km", s.AltitudeKM), x, b.Y+124, 13, colors.text)
+	simpleui.DrawText(i18n.Tf("Latitud       %.4f°", s.Latitude), x, b.Y+72, 13, colors.text)
+	simpleui.DrawText(i18n.Tf("Longitud    %.4f°", s.Longitude), x, b.Y+98, 13, colors.text)
+	simpleui.DrawText(i18n.Tf("Altitud       %.0f km", s.AltitudeKM), x, b.Y+124, 13, colors.text)
 
 	x = b.X + 566
-	simpleui.DrawText("DESDE "+v.snapshot.Station.Name, x, b.Y+45, 11, colors.muted)
-	simpleui.DrawText(fmt.Sprintf("Azimut        %.1f°", s.Azimuth), x, b.Y+72, 13, colors.text)
-	simpleui.DrawText(fmt.Sprintf("Elevación   %.1f°", s.Elevation), x, b.Y+98, 13, colors.text)
-	simpleui.DrawText(fmt.Sprintf("Distancia   %.0f km", s.RangeKM), x, b.Y+124, 13, colors.text)
+	simpleui.DrawText(i18n.T("DESDE ")+v.snapshot.Station.Name, x, b.Y+45, 11, colors.muted)
+	simpleui.DrawText(i18n.Tf("Azimut        %.1f°", s.Azimuth), x, b.Y+72, 13, colors.text)
+	simpleui.DrawText(i18n.Tf("Elevación   %.1f°", s.Elevation), x, b.Y+98, 13, colors.text)
+	simpleui.DrawText(i18n.Tf("Distancia   %.0f km", s.RangeKM), x, b.Y+124, 13, colors.text)
 
 	x = b.X + 808
 	simpleui.DrawText("RADIO / TELEMETRÍA", x, b.Y+45, 11, colors.muted)
 	simpleui.DrawText(sondeClip(s.Signal, 28), x, b.Y+72, 13, colors.text)
-	simpleui.DrawText("Modo          "+s.Mode, x, b.Y+98, 13, colors.text)
+	simpleui.DrawText(i18n.T("Modo          ")+s.Mode, x, b.Y+98, 13, colors.text)
 	frequency := "Downlink    --"
 	if s.DownlinkHz > 0 {
 		frequency = fmt.Sprintf("Downlink    %.6f MHz", float64(s.DownlinkHz)/1e6)

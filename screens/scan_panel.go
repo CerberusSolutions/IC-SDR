@@ -8,6 +8,8 @@ import (
 	"go-zero/simpleui"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
+
+	"go-zero/internal/i18n"
 )
 
 type scanPeak struct {
@@ -284,7 +286,7 @@ func (p *ScanPanel) DrawPanel() {
 		}
 		return colors.muted
 	}())
-	simpleui.DrawTextStyled(fmt.Sprintf("RANGO %.5f–%.5f MHz  ·  DISPARO SQL %d dBm", float64(p.minimumHz)/1e6, float64(p.maximumHz)/1e6, p.screen.squelchThreshold), 720, 645, 13, simpleui.FontSemiBold, colors.muted)
+	simpleui.DrawTextStyled(i18n.Tf("RANGO %.5f–%.5f MHz  ·  DISPARO SQL %d dBm", float64(p.minimumHz)/1e6, float64(p.maximumHz)/1e6, p.screen.squelchThreshold), 720, 645, 13, simpleui.FontSemiBold, colors.muted)
 	memoryColor := rl.Color{R: 45, G: 58, B: 72, A: 255}
 	memoryDetail := "OFF · Sintonizar el pico"
 	if p.centerToMemory {
@@ -293,7 +295,7 @@ func (p *ScanPanel) DrawPanel() {
 	}
 	drawScanButton(42, 678, 220, 58, "AJUSTAR A MEMORIA", memoryDetail, memoryColor)
 	drawScanButton(276, 678, 220, 58, "AL PERDER LA SEÑAL  ▾", p.resumeDescription(), rl.Color{R: 150, G: 95, B: 18, A: 255})
-	drawScanButton(510, 678, 190, 58, fmt.Sprintf("ESPERA %d s  ▾", p.dwellMs/1000), "Antes de continuar", rl.Color{R: 70, G: 68, B: 55, A: 255})
+	drawScanButton(510, 678, 190, 58, i18n.Tf("ESPERA %d s  ▾", p.dwellMs/1000), "Antes de continuar", rl.Color{R: 70, G: 68, B: 55, A: 255})
 	startColor, startText, startDetail := rl.Color{R: 25, G: 125, B: 65, A: 255}, "INICIAR ESCANEO", "Buscar entre MIN y MAX"
 	if p.running {
 		startColor, startText, startDetail = rl.Color{R: 155, G: 42, B: 35, A: 255}, "DETENER ESCANEO", "Conservar frecuencia actual"
@@ -493,13 +495,13 @@ func (p *ScanPanel) displayStatus() string {
 	case p.status == "HOLD":
 		return "ESCUCHA RETENIDA"
 	case strings.HasPrefix(p.status, "VERIFY"):
-		return "VERIFICANDO" + strings.TrimPrefix(p.status, "VERIFY")
+		return i18n.T("VERIFICANDO") + strings.TrimPrefix(p.status, "VERIFY")
 	case strings.HasPrefix(p.status, "SIGNAL"):
-		return "ESCUCHANDO" + strings.TrimPrefix(p.status, "SIGNAL")
+		return i18n.T("ESCUCHANDO") + strings.TrimPrefix(p.status, "SIGNAL")
 	case strings.HasPrefix(p.status, "LISTENING"):
-		return "ESCUCHANDO" + strings.TrimPrefix(p.status, "LISTENING")
+		return i18n.T("ESCUCHANDO") + strings.TrimPrefix(p.status, "LISTENING")
 	case strings.HasPrefix(p.status, "JUMP"):
-		return "CAMBIO" + strings.TrimPrefix(p.status, "JUMP")
+		return i18n.T("CAMBIO") + strings.TrimPrefix(p.status, "JUMP")
 	default:
 		return p.status
 	}

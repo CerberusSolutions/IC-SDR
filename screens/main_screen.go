@@ -9,6 +9,8 @@ import (
 	"go-zero/simpleui"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
+
+	"go-zero/internal/i18n"
 )
 
 const (
@@ -86,6 +88,8 @@ type MainScreen struct {
 	viewButton             *simpleui.Button
 	themeButton            *simpleui.Button
 	themeName              string
+	languageSelector       *LanguageSelector
+	language               i18n.Language
 	filterSelector         *FilterSelector
 	bandSelector           *BandSelector
 	stepSelector           *StepSelector
@@ -214,6 +218,7 @@ func NewMainScreen(receiver *sdr.Receiver) *MainScreen {
 		activeTool:             "WATERFALL_ADJUST",
 		viewMode:               1,
 		themeName:              themeDark,
+		language:               i18n.Current(),
 		spectrumMinimumDB:      -37,
 		spectrumMaximumDB:      0,
 		fftAveragingMs:         107,
@@ -232,7 +237,7 @@ func NewMainScreen(receiver *sdr.Receiver) *MainScreen {
 		savedMode:              "USB",
 		dmrAutoCenter:          true,
 		dmrAudioSlot:           "AUTO",
-		aprsView:               "PAQUETES",
+		aprsView:               aprsViewPackets,
 		rtl433FrequencyHz:      433_920_000,
 		rtl433BandwidthHz:      500_000,
 		sstvAutomatic:          true,
@@ -371,7 +376,8 @@ func (screen *MainScreen) CreateControls() {
 	menu := simpleui.NewButton("menu", toolContentX, 842, 130, 40, "MENU", 15)
 	screen.viewButton = simpleui.NewButton("view", toolContentX+140, 842, 115, 40, "VIEW 1", 14)
 	screen.step = simpleui.NewButton("step", toolContentX+265, 842, 250, 40, "STEP  "+formatStep(screen.tuningStepHz), 15)
-	screen.themeButton = simpleui.NewButton("theme", toolContentX+525, 842, 190, 40, "ESTILO  "+themeDisplayName(screen.themeName), 13)
+	screen.themeButton = simpleui.NewButton("theme", toolContentX+525, 842, 190, 40, i18n.T("ESTILO  ")+i18n.T(themeDisplayName(screen.themeName)), 13)
+	screen.languageSelector = NewLanguageSelector(toolContentX+725, 842, screen.setLanguage)
 	spanDown.OnClick(func() { screen.changeSpan(-1) })
 	spanUp.OnClick(func() { screen.changeSpan(1) })
 	screen.toolMenu = NewToolMenu(screen.activeTool, screen.selectTool)
@@ -442,7 +448,7 @@ func (screen *MainScreen) CreateControls() {
 		screen.mode, screen.filter, screen.band,
 		squelch, screen.squelchLabel, screen.squelchSlider, holdLabel, holdSlider, closeLabel, closeSlider,
 		mute, screen.volumeLabel, screen.volumeSlider, screen.vfoModeSwitch, screen.memViewSwitch,
-		spanDown, spanUp, menu, screen.viewButton, screen.step, screen.themeButton,
+		spanDown, spanUp, menu, screen.viewButton, screen.step, screen.themeButton, screen.languageSelector,
 	} {
 		simpleui.Add(element)
 	}
@@ -762,8 +768,10 @@ func (screen *MainScreen) drawFrequencyDisplay() {
 	simpleui.DrawTextStyled(centerLabel, frequencyPanelX+frequencyPanelW-18-centerWidth, footerY, 12, simpleui.FontSemiBold, centerColor)
 }
 
+// formatDialFrequency renders the VFO readout with the digit grouping of the
+// active language: 446.193.750 in Spanish, 446,193,750 in British English.
 func formatDialFrequency(hz int64) string {
-	return fmt.Sprintf("%d.%03d.%03d", hz/1_000_000, (hz/1_000)%1_000, hz%1_000)
+	return i18n.FormatDialFrequency(hz)
 }
 
 func countFrequencyDigits(value string) int {
@@ -1180,7 +1188,7 @@ func (screen *MainScreen) refreshWaterfallControls() {
 	if settings.ColorOffsetDB > 0 {
 		offset = "+" + offset
 	}
-	screen.wfOffsetLabel.SetText("COLOR OFFSET  " + offset + " dB")
+	screen.wfOffsetLabel.SetText(i18n.T("COLOR OFFSET  ") + offset + " dB")
 	screen.wfContrastLabel.SetText(fmt.Sprintf("CONTRAST  %d %%", settings.Contrast))
 	screen.wfRangeLabel.SetText(fmt.Sprintf("LEVEL  %.0f / %.0f dBm", settings.MinimumDBm, settings.MaximumDBm))
 	screen.wfSpeedLabel.SetText(fmt.Sprintf("SPEED  %d lines/s", settings.LinesPerSecond))

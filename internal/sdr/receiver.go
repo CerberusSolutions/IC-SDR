@@ -16,6 +16,8 @@ import (
 	"go-zero/internal/rtl433"
 	"go-zero/internal/sstv"
 	"go-zero/internal/tetra"
+
+	"go-zero/internal/i18n"
 )
 
 const demodulatedAudioSampleRate = 48_000
@@ -858,7 +860,7 @@ func (receiver *Receiver) addEvent(timeout, overflow bool) {
 
 func (receiver *Receiver) setError(err error) {
 	receiver.mu.Lock()
-	receiver.stats.Status = "ERROR: " + err.Error()
+	receiver.stats.Status = i18n.T("ERROR: ") + err.Error()
 	receiver.mu.Unlock()
 }
 

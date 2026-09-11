@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -12,6 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"go-zero/internal/i18n"
 	"go-zero/internal/resources"
 	"go-zero/internal/sdr"
 	"go-zero/screens"
@@ -22,10 +22,16 @@ var startupLogFile *os.File
 var startupStage atomic.Value
 
 func main() {
+	// Install the translator and resolve the language before anything is
+	// logged or drawn, so start-up diagnostics and the first frame already
+	// appear in the language the user last chose.
+	simpleui.SetTranslator(i18n.T)
+	i18n.Set(screens.StartupLanguage())
+
 	var err error
 	startupLogFile, err = configureStartupLog()
 	if err != nil {
-		showStartupError("IC-SDR no puede crear DATA\\logs\\startup.log:\n\n" + err.Error() + "\n\nCompruebe que la carpeta portable permite escritura.")
+		showStartupError(i18n.T("IC-SDR no puede crear DATA\\logs\\startup.log:\n\n") + err.Error() + i18n.T("\n\nCompruebe que la carpeta portable permite escritura."))
 		return
 	}
 	if startupLogFile != nil {
@@ -33,7 +39,7 @@ func main() {
 	}
 	defer func() {
 		if recovered := recover(); recovered != nil {
-			message := "IC-SDR no pudo iniciarse. Consulte DATA\\logs\\startup.log."
+			message := i18n.T("IC-SDR no pudo iniciarse. Consulte DATA\\logs\\startup.log.")
 			startupStep("FALLO IRRECUPERABLE: %v\n%s", recovered, debug.Stack())
 			showStartupError(message)
 		}
@@ -169,9 +175,11 @@ func configureStartupLog() (*os.File, error) {
 }
 
 func startupStep(format string, args ...any) {
-	message := fmt.Sprintf(format, args...)
+	// The format string is the catalogue key, so it is translated before the
+	// arguments are substituted rather than after.
+	message := i18n.Tf(format, args...)
 	startupStage.Store(message)
-	log.Print("PASO · " + message)
+	log.Print(i18n.T("PASO · ") + message)
 	if startupLogFile != nil {
 		_ = startupLogFile.Sync()
 	}

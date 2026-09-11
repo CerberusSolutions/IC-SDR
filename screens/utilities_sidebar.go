@@ -7,6 +7,8 @@ import (
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"go-zero/simpleui"
+
+	"go-zero/internal/i18n"
 )
 
 const utilitiesRight = float32(350)
@@ -68,7 +70,7 @@ func NewUtilitiesSidebar(screen *MainScreen) *UtilitiesSidebar {
 	p.add = button("utilityMemoryAdd", "+ MEMORIA", 182, 405, 152, 31, screen.memoryPanel.openSaveModal)
 	addGroup := button("utilityMemoryAddGroup", "+ GRUPO", 24, 405, 150, 31, screen.memoryPanel.openNewGroupModal)
 	_ = addGroup
-	p.groupPick = simpleui.NewDropdown("utilityMemoryFilter", 24, 442, 220, 32, "TODAS", screen.memoryPanel.groups, 13)
+	p.groupPick = simpleui.NewDropdown("utilityMemoryFilter", 24, 442, 220, 32, memoryGroupAll, screen.memoryPanel.groups, 13)
 	p.groupPick.OnChange(func(_ int, group string) {
 		screen.memoryPanel.selectedGroup, screen.memoryPanel.selected, screen.memoryPanel.scrollOffset = group, -1, 0
 	})
@@ -114,7 +116,7 @@ func (p *UtilitiesSidebar) Draw() {
 		return colors.muted
 	}())
 	simpleui.DrawText(fmt.Sprintf("%.3f–%.3f MHz · SQL %d", float64(scan.minimumHz)/1e6, float64(scan.maximumHz)/1e6, p.screen.squelchThreshold), 24, 278, 11, colors.muted)
-	p.scanMode.SetLabel("REANUDAR " + scan.resume)
+	p.scanMode.SetLabel(i18n.T("REANUDAR ") + scan.resume)
 	if scan.centerToMemory {
 		p.scanMem.SetLabel("MEM ON")
 	} else {
@@ -122,7 +124,7 @@ func (p *UtilitiesSidebar) Draw() {
 	}
 
 	memory := p.screen.memoryPanel
-	canEditGroup := memory.selectedGroup != "" && memory.selectedGroup != "TODAS" && memory.selectedGroup != "SIN GRUPO"
+	canEditGroup := memory.selectedGroup != "" && memory.selectedGroup != memoryGroupAll && memory.selectedGroup != memoryGroupNone
 	p.groupEdit.SetEnabled(canEditGroup)
 	if !slices.Equal(p.groupPick.Items(), memory.groups) {
 		p.groupPick.SetItems(memory.groups)

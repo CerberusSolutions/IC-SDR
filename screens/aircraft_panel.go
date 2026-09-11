@@ -10,6 +10,8 @@ import (
 	"go-zero/internal/aircraft"
 	"go-zero/internal/resources"
 	"go-zero/simpleui"
+
+	"go-zero/internal/i18n"
 )
 
 type AircraftPanel struct {
@@ -206,9 +208,9 @@ func (p *AircraftPanel) DrawPanel() {
 		status = p.screen.receiver.AircraftStatus()
 		list = p.screen.receiver.Aircraft()
 	}
-	simpleui.DrawText(fmt.Sprintf("VIGILANCIA AÉREA · %s · %.3f MHz · %s · %d aeronaves · %d mensajes", p.mode, float64(p.frequency())/1e6, status.State, len(list), status.Messages), 40, toolY+7, 12, colors.cyan)
+	simpleui.DrawText(i18n.Tf("VIGILANCIA AÉREA · %s · %.3f MHz · %s · %d aeronaves · %d mensajes", p.mode, float64(p.frequency())/1e6, status.State, len(list), status.Messages), 40, toolY+7, 12, colors.cyan)
 	if status.Error != "" {
-		simpleui.DrawText(sondeClip(status.Error, 72), 880, toolY+38, 12, colors.red)
+		simpleui.DrawText(sondeClip(i18n.T(status.Error), 72), 880, toolY+38, 12, colors.red)
 	} else {
 		simpleui.DrawText("1090: ADS-B/Mode S mundial · 978 UAT: principalmente EE. UU.", 880, toolY+38, 12, colors.muted)
 	}
@@ -245,5 +247,5 @@ func (p *AircraftPanel) DrawPanel() {
 	if len(list) == 0 {
 		simpleui.DrawText("Selecciona banda y pulsa INICIAR. ABRIR MAPA muestra posiciones, altitud y estelas en otra ventana.", 40, toolY+110, 13, colors.muted)
 	}
-	simpleui.DrawText(sondeClip(p.feedback+"  Recepción local desde el SDR · sin servicios de seguimiento externos", 150), 40, toolY+174, 12, colors.muted)
+	simpleui.DrawText(sondeClip(i18n.T(p.feedback)+i18n.T("  Recepción local desde el SDR · sin servicios de seguimiento externos"), 150), 40, toolY+174, 12, colors.muted)
 }

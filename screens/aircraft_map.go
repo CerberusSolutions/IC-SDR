@@ -9,6 +9,8 @@ import (
 	"math"
 	"os"
 	"time"
+
+	"go-zero/internal/i18n"
 )
 
 func RunAircraftMap(path string) {
@@ -242,7 +244,7 @@ func (v *aircraftMap) draw() {
 		simpleui.DrawText(label+alt, p.X+13, p.Y-8, 10, colors.text)
 	}
 	simpleui.DrawText("TRÁFICO AÉREO EN VIVO", 24, 20, 24, colors.cyan)
-	simpleui.DrawText(fmt.Sprintf("%d aeronaves · cyan 1090 · naranja 978 · arrastra y usa la rueda", len(v.list)), 340, 29, 13, colors.muted)
+	simpleui.DrawText(i18n.Tf("%d aeronaves · cyan 1090 · naranja 978 · arrastra y usa la rueda", len(v.list)), 340, 29, 13, colors.muted)
 	v.details()
 	simpleui.DrawText("Natural Earth · posiciones recibidas directamente por radio", 1015, 742, 9, colors.muted)
 }
@@ -276,7 +278,7 @@ func (v *aircraftMap) details() {
 	if a.Altitude != nil {
 		alt = fmt.Sprintf("%d ft", *a.Altitude)
 	}
-	lines := []struct{ l, v string }{{"VUELO", a.Callsign}, {"ICAO", a.ICAO}, {"FUENTE", a.Source}, {"LATITUD", val(a.Latitude, "%.6f°")}, {"LONGITUD", val(a.Longitude, "%.6f°")}, {"ALTITUD", alt}, {"VELOCIDAD", val(a.Speed, "%.0f kt")}, {"RUMBO", val(a.Track, "%.1f°")}, {"VELOCIDAD VERTICAL", val(a.VerticalRate, "%.0f ft/min")}, {"SQUAWK", a.Squawk}, {"CATEGORÍA", a.Category}, {"MENSAJES", fmt.Sprintf("%d", a.Messages)}, {"ACTUALIZADO", time.Since(a.LastSeen).Round(time.Second).String() + " atrás"}}
+	lines := []struct{ l, v string }{{"VUELO", a.Callsign}, {"ICAO", a.ICAO}, {"FUENTE", a.Source}, {"LATITUD", val(a.Latitude, "%.6f°")}, {"LONGITUD", val(a.Longitude, "%.6f°")}, {"ALTITUD", alt}, {"VELOCIDAD", val(a.Speed, "%.0f kt")}, {"RUMBO", val(a.Track, "%.1f°")}, {"VELOCIDAD VERTICAL", val(a.VerticalRate, "%.0f ft/min")}, {"SQUAWK", a.Squawk}, {"CATEGORÍA", a.Category}, {"MENSAJES", fmt.Sprintf("%d", a.Messages)}, {"ACTUALIZADO", time.Since(a.LastSeen).Round(time.Second).String() + i18n.T(" atrás")}}
 	for i, z := range lines {
 		y := float32(125 + i*42)
 		simpleui.DrawText(z.l, x, y, 9, colors.muted)

@@ -2,7 +2,6 @@ package screens
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -10,6 +9,8 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"go-zero/internal/aprs"
 	"go-zero/simpleui"
+
+	"go-zero/internal/i18n"
 )
 
 func RunAPRSViewer(path string) {
@@ -26,7 +27,7 @@ func RunAPRSViewer(path string) {
 		if err != nil {
 			v.feedback = "ERROR AL EXPORTAR"
 		} else {
-			v.feedback = "GUARDADO: " + filepath.Base(saved)
+			v.feedback = i18n.T("GUARDADO: ") + filepath.Base(saved)
 		}
 		v.until = time.Now().Add(3 * time.Second)
 	})
@@ -63,7 +64,7 @@ func (v *aprsViewer) draw() {
 	v.read()
 	rl.DrawRectangle(0, 0, 1450, 760, colors.background)
 	simpleui.DrawTextStyled("CAPTURAS APRS", 28, 24, 22, simpleui.FontSemiBold, colors.cyan)
-	simpleui.DrawText(fmt.Sprintf("%d paquetes · tabla actualizada en tiempo real", len(v.packets)), 28, 54, 13, colors.muted)
+	simpleui.DrawText(i18n.Tf("%d paquetes · tabla actualizada en tiempo real", len(v.packets)), 28, 54, 13, colors.muted)
 	if time.Now().Before(v.until) {
 		simpleui.DrawTextStyled(v.feedback, 910, 35, 13, simpleui.FontSemiBold, colors.green)
 	}
@@ -122,7 +123,7 @@ func (v *aprsViewer) draw() {
 	if v.selected >= 0 && v.selected < len(v.packets) {
 		p := v.packets[v.selected]
 		drawWrapped(p.Raw, 32, 646, 1375, 13, colors.text)
-		simpleui.DrawText(fmt.Sprintf("Símbolo %s · Locator %s · Rumbo %s · Velocidad %s · Altitud %s", p.Symbol, p.Locator, p.Course, p.Speed, p.Altitude), 32, 700, 12, colors.muted)
+		simpleui.DrawText(i18n.Tf("Símbolo %s · Locator %s · Rumbo %s · Velocidad %s · Altitud %s", p.Symbol, p.Locator, p.Course, p.Speed, p.Altitude), 32, 700, 12, colors.muted)
 	} else {
 		simpleui.DrawText("Selecciona un paquete para consultar la trama completa.", 32, 650, 13, colors.muted)
 	}

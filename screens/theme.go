@@ -6,6 +6,8 @@ import (
 	"go-zero/simpleui"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
+
+	"go-zero/internal/i18n"
 )
 
 const (
@@ -98,7 +100,7 @@ func (screen *MainScreen) applyTheme(name string) {
 		return remapThemeColor(color, colors)
 	})
 	if screen.themeButton != nil {
-		screen.themeButton.SetLabel("ESTILO  " + themeDisplayName(name))
+		screen.themeButton.SetLabel(i18n.T("ESTILO  ") + i18n.T(themeDisplayName(name)))
 	}
 }
 
