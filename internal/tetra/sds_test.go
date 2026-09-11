@@ -1,6 +1,7 @@
 package tetra
 
 import (
+	"encoding/json"
 	"math"
 	"strings"
 	"testing"
@@ -49,5 +50,33 @@ func TestParseSDSLIPAlsoCreatesMessage(t *testing.T) {
 	}
 	if !strings.Contains(message.Text, "40.4168") || !strings.Contains(message.Text, "-3.7037") {
 		t.Fatalf("GPS event is not useful in Messages: %q", message.Text)
+	}
+}
+
+// The viewer window reads TETRA activity from a JSON snapshot written by the
+// receiver, so every field it displays has to survive the round trip. Kind and
+// Text once shared a single struct tag, which made encoding/json treat them as
+// a conflicting pair and silently drop both.
+func TestMessageSurvivesTheSnapshotRoundTrip(t *testing.T) {
+	snapshot := LiveSnapshot{
+		Messages: []Message{{Time: time.Unix(1_700_000_000, 0).UTC(), Kind: "SDS-4", Text: "CONTROL A UNIDAD 12"}},
+	}
+	encoded, err := json.Marshal(snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var decoded LiveSnapshot
+	if err := json.Unmarshal(encoded, &decoded); err != nil {
+		t.Fatal(err)
+	}
+	if len(decoded.Messages) != 1 {
+		t.Fatalf("got %d messages, want 1", len(decoded.Messages))
+	}
+	got := decoded.Messages[0]
+	if got.Kind != "SDS-4" || got.Text != "CONTROL A UNIDAD 12" {
+		t.Fatalf("message lost fields in transit: kind=%q text=%q", got.Kind, got.Text)
+	}
+	if !got.Time.Equal(snapshot.Messages[0].Time) {
+		t.Fatalf("message time = %v, want %v", got.Time, snapshot.Messages[0].Time)
 	}
 }

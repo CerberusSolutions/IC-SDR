@@ -82,8 +82,12 @@ type User struct {
 	Seen        uint64    `json:"seen"`
 }
 type Message struct {
-	Time       time.Time `json:"time"`
-	Kind, Text string    `json:"kind"`
+	Time time.Time `json:"time"`
+	// Kind and Text need a tag each. Sharing one made encoding/json treat them
+	// as a conflicting pair and drop both, so every SDS message reached the
+	// viewer window with an empty kind and body.
+	Kind string `json:"kind"`
+	Text string `json:"text"`
 }
 type Position struct {
 	SSI       uint32    `json:"ssi"`

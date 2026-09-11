@@ -122,9 +122,20 @@ string, in every language, against the control that draws it:
 go run .\cmd\uifit
 ```
 
-It exits non-zero if anything overflows, so it can be wired into CI. Run it
-after adding an interface string or editing the translation catalogue in
-`internal/i18n`.
+It exits non-zero if anything overflows. Run it after adding an interface
+string or editing the translation catalogue in `internal/i18n`.
+
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every push and pull request:
+
+| Job | Runner | What it does |
+| --- | --- | --- |
+| Build and test | `windows-latest` | `go build ./...` and `go test ./...`. Windows is the only platform that can build the whole module, because `internal/sdr` and `internal/tetra` hold the SoapySDR and voice-codec bindings. |
+| Formatting and interface fit | `ubuntu-latest` | `gofmt -l .` and `cmd/uifit`. Both only parse the source, so they cover the Windows-only packages too. `uifit` measures real font metrics, so it runs under Xvfb with Mesa's software renderer. |
+
+`gofmt` runs on Linux rather than Windows deliberately: it compares bytes, so a
+checkout that translated line endings would report every file as unformatted.
 
 ## Data and configuration
 

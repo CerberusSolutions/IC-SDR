@@ -19,8 +19,14 @@ func decodeHex(t *testing.T, d *Decoder, value string) {
 func TestDecodeADSBIdentificationAndPosition(t *testing.T) {
 	d := New(2_048_000, "", "", "")
 	decodeHex(t, d, "8D4840D6202CC371C32CE0576098")
-	decodeHex(t, d, "8D40621D58C382D690C8AC2863A7")
+	// The globally unambiguous CPR solution is anchored on whichever of the
+	// even/odd pair arrived last, so the order these two are fed decides the
+	// answer. Feeding the odd frame first makes the even frame the reference,
+	// which is the arrangement the published worked example uses and the one
+	// the expected coordinates below come from. Fed the other way round the
+	// same pair correctly resolves to 52.26578, 3.93891 instead.
 	decodeHex(t, d, "8D40621D58C386435CC412692AD6")
+	decodeHex(t, d, "8D40621D58C382D690C8AC2863A7")
 	list := d.Aircraft()
 	if len(list) != 2 {
 		t.Fatalf("got %d aircraft", len(list))

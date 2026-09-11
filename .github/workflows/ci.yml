@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Build and test (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # IC-SDR targets Windows: internal/sdr and internal/tetra carry the
+      # SoapySDR and voice-codec bindings, and both are Windows-only, so this
+      # is the only platform that can build and test the whole module.
+      - name: Build
+        run: go build ./...
+
+      # The one test that needs a receiver connected is opt-in through
+      # RTLSDR_HARDWARE_TEST and skips itself here.
+      - name: Test
+        run: go test ./...
+
+  layout:
+    name: Formatting and interface fit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # gofmt runs here rather than on the Windows job because it compares
+      # bytes: a checkout that translated line endings would report every file
+      # as unformatted. It only parses the source, so the Windows-only packages
+      # are covered even though they do not build on this platform.
+      - name: Check formatting
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "These files are not gofmt-clean:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      # uifit reads the interface source with go/parser rather than importing
+      # it, so it runs here as well. It does need the graphics stack, because
+      # the font metrics it measures with come from raylib; Mesa's software
+      # renderer under Xvfb is enough, as no pixels are ever presented.
+      - name: Install the graphics stack
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libgl1-mesa-dev libgl1-mesa-dri libwayland-dev libxkbcommon-dev \
+            libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev xvfb
+
+      # Every interface string is measured, in every language, against the
+      # control that draws it. The layout is in fixed pixel coordinates and
+      # nothing clips, so a translation that grew past its control would
+      # otherwise only show up in the running application.
+      - name: Check that every string fits its control
+        env:
+          LIBGL_ALWAYS_SOFTWARE: "1"
+        run: xvfb-run -a go run ./cmd/uifit
