@@ -7,6 +7,8 @@ import (
 	"sort"
 	"sync"
 	"time"
+
+	"go-zero/internal/i18n"
 )
 
 const (
@@ -701,10 +703,10 @@ func (d *Decoder) processNormalBurst(burst []byte, slot int, ndb2 bool) {
 		if aachOK && usage > 3 && !secondHalfStolen {
 			if d.activeAudioSlot != int8(slot+1) || time.Since(d.activeAudioSeen) > 5*time.Second {
 				d.audioRejectedUnselected++
-				d.lastAudioDecision = fmt.Sprintf("TS%d NDB2 NO SELECCIONADO", slot+1)
+				d.lastAudioDecision = i18n.Tf("TS%d NDB2 NO SELECCIONADO", slot+1)
 			} else if d.clearAudioOnly && d.slotEncrypted[slot] != 0 {
 				d.audioRejectedEncrypted++
-				d.lastAudioDecision = fmt.Sprintf("TS%d NDB2 CIFRADO O DESCONOCIDO", slot+1)
+				d.lastAudioDecision = i18n.Tf("TS%d NDB2 CIFRADO O DESCONOCIDO", slot+1)
 			} else if half := descrambleBlock(coded[216:], si); half != nil {
 				voiceBits := make([]byte, 432)
 				copy(voiceBits[216:], half)
@@ -771,15 +773,15 @@ func (d *Decoder) processVoiceLocked(coded []byte, si SystemInfo, slot int) {
 	if d.clearAudioOnly && d.slotEncrypted[slot] != 0 {
 		d.audioRejectedEncrypted++
 		if d.slotEncrypted[slot] < 0 {
-			d.lastAudioDecision = fmt.Sprintf("TS%d CIFRADO DESCONOCIDO", slot+1)
+			d.lastAudioDecision = i18n.Tf("TS%d CIFRADO DESCONOCIDO", slot+1)
 		} else {
-			d.lastAudioDecision = fmt.Sprintf("TS%d CIFRADO", slot+1)
+			d.lastAudioDecision = i18n.Tf("TS%d CIFRADO", slot+1)
 		}
 		return
 	}
 	if d.activeAudioSlot != int8(slot+1) || time.Since(d.activeAudioSeen) > 5*time.Second {
 		d.audioRejectedUnselected++
-		d.lastAudioDecision = fmt.Sprintf("TS%d NO SELECCIONADO", slot+1)
+		d.lastAudioDecision = i18n.Tf("TS%d NO SELECCIONADO", slot+1)
 		return
 	}
 	voice := d.voice[slot]
@@ -802,12 +804,12 @@ func (d *Decoder) processVoiceBitsLocked(type4 []byte, slot int, stolen bool) {
 	pcm, ok := voice.decode(type4, stolen)
 	if !ok {
 		d.audioRejectedDamaged++
-		d.lastAudioDecision = fmt.Sprintf("TS%d TRAMA DE VOZ RECHAZADA", slot+1)
+		d.lastAudioDecision = i18n.Tf("TS%d TRAMA DE VOZ RECHAZADA", slot+1)
 		return
 	}
 	d.audioFrames++
 	d.lastAudio = time.Now()
-	d.lastAudioDecision = fmt.Sprintf("REPRODUCIENDO TS%d", slot+1)
+	d.lastAudioDecision = i18n.Tf("REPRODUCIENDO TS%d", slot+1)
 	d.onAudio(pcm)
 }
 

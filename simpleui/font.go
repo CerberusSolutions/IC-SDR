@@ -55,12 +55,30 @@ func SetTextScale(scale float32) {
 	textScale = scale
 }
 
-// DrawText draws smooth embedded-font text in logical coordinates.
+// DrawText draws smooth embedded-font text in logical coordinates. The text is
+// localised through the installed translator; use DrawTextRaw for content that
+// belongs to the user rather than to the interface.
 func DrawText(text string, x, y float32, size int32, color rl.Color) {
 	DrawTextStyled(text, x, y, size, FontRegular, color)
 }
 
 func DrawTextStyled(text string, x, y float32, size int32, style FontStyle, color rl.Color) {
+	drawTextStyled(translate(text), x, y, size, style, color)
+}
+
+// DrawTextRaw draws text exactly as given, bypassing the translator. Use it for
+// values the user typed or that arrived off the air, so a name that happens to
+// match an interface string is never rewritten.
+func DrawTextRaw(text string, x, y float32, size int32, color rl.Color) {
+	drawTextStyled(text, x, y, size, FontRegular, color)
+}
+
+// DrawTextStyledRaw is DrawTextRaw with an explicit typeface.
+func DrawTextStyledRaw(text string, x, y float32, size int32, style FontStyle, color rl.Color) {
+	drawTextStyled(text, x, y, size, style, color)
+}
+
+func drawTextStyled(text string, x, y float32, size int32, style FontStyle, color rl.Color) {
 	effectiveSize := scaledTextSize(size)
 	font := cachedFont(style, effectiveSize)
 	if horizontalDrawScale != 1 {
@@ -73,12 +91,27 @@ func DrawTextStyled(text string, x, y float32, size int32, style FontStyle, colo
 	rl.DrawTextEx(font, text, rl.Vector2{X: x, Y: y}, float32(effectiveSize), textSpacing(effectiveSize), color)
 }
 
-// MeasureText returns the logical size of embedded-font text.
+// MeasureText returns the logical size of embedded-font text once it has been
+// localised, so callers lay out the text that will actually be drawn.
 func MeasureText(text string, size int32) rl.Vector2 {
 	return MeasureTextStyled(text, size, FontRegular)
 }
 
 func MeasureTextStyled(text string, size int32, style FontStyle) rl.Vector2 {
+	return measureTextStyled(translate(text), size, style)
+}
+
+// MeasureTextRaw measures text exactly as given, matching DrawTextRaw.
+func MeasureTextRaw(text string, size int32) rl.Vector2 {
+	return measureTextStyled(text, size, FontRegular)
+}
+
+// MeasureTextStyledRaw is MeasureTextRaw with an explicit typeface.
+func MeasureTextStyledRaw(text string, size int32, style FontStyle) rl.Vector2 {
+	return measureTextStyled(text, size, style)
+}
+
+func measureTextStyled(text string, size int32, style FontStyle) rl.Vector2 {
 	effectiveSize := scaledTextSize(size)
 	font := cachedFont(style, effectiveSize)
 	return rl.MeasureTextEx(font, text, float32(effectiveSize), textSpacing(effectiveSize))

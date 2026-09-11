@@ -12,6 +12,8 @@ import (
 	"go-zero/simpleui"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
+
+	"go-zero/internal/i18n"
 )
 
 type sstvPreview struct {
@@ -96,7 +98,7 @@ func NewSSTVPanel(screen *MainScreen) *SSTVPanel {
 			p.flash(err.Error())
 			return
 		}
-		p.flash("Guardada: " + filepath.Base(path))
+		p.flash(i18n.T("Guardada: ") + filepath.Base(path))
 	})
 	p.folder.OnClick(func() {
 		if screen.receiver == nil {
@@ -214,11 +216,11 @@ func (p *SSTVPanel) DrawPanel() {
 		stateColor = colors.green
 	}
 	drawSmallText(p.status.State+" · "+p.displayMode(), 1006, 751, stateColor)
-	drawSmallText(fmt.Sprintf("PROGRESO %d%%   SYNC %d%%   COLA %d   DROP %d", p.status.Progress, p.status.SyncPercent, p.status.Queued, p.status.Dropped), 1006, 774, colors.text)
+	drawSmallText(i18n.Tf("PROGRESO %d%%   SYNC %d%%   COLA %d   DROP %d", p.status.Progress, p.status.SyncPercent, p.status.Queued, p.status.Dropped), 1006, 774, colors.text)
 	bar := rl.Rectangle{X: 1006, Y: 799, Width: 550, Height: 10}
 	rl.DrawRectangleRec(bar, colors.grid)
 	rl.DrawRectangleRec(rl.Rectangle{X: bar.X, Y: bar.Y, Width: bar.Width * float32(p.status.Progress) / 100, Height: bar.Height}, colors.green)
-	tone := fmt.Sprintf("TONO %.0f Hz  %.0f dB", p.status.ToneFrequency, p.status.ToneLevel)
+	tone := i18n.Tf("TONO %.0f Hz  %.0f dB", p.status.ToneFrequency, p.status.ToneLevel)
 	drawSmallText(tone, 1006, 812, colors.muted)
 	if p.feedback != "" && time.Now().Before(p.feedbackUntil) {
 		drawSmallText(p.feedback, 1240, 812, colors.cyan)

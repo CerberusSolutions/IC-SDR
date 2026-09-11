@@ -13,6 +13,8 @@ import (
 	"go-zero/internal/resources"
 	"go-zero/internal/tetra"
 	"go-zero/simpleui"
+
+	"go-zero/internal/i18n"
 )
 
 type TETRAPanel struct {
@@ -89,7 +91,7 @@ func NewTETRAPanel(screen *MainScreen) *TETRAPanel {
 		hz   int64
 	}{{"380–400", tetra.DefaultFrequencyHz}, {"410–430", 420_000_000}, {"450–470", 460_000_000}} {
 		bb := b
-		btn := button(fmt.Sprintf("tetraBand%d", i), bb.name, 565+float32(i)*142, 130, func() { p.tune(bb.hz); p.feedback = "BANDA " + bb.name + " MHz" })
+		btn := button(fmt.Sprintf("tetraBand%d", i), bb.name, 565+float32(i)*142, 130, func() { p.tune(bb.hz); p.feedback = i18n.T("BANDA ") + bb.name + " MHz" })
 		btn.SetColors(colors.blue, colors.border, colors.text)
 	}
 	p.SetVisible(false)
@@ -173,7 +175,7 @@ func (p *TETRAPanel) applyAudioPolicy() {
 	if p.listenSlot > 0 {
 		mode = fmt.Sprintf("TS%d", p.listenSlot)
 	}
-	p.feedback = "ESCUCHA " + mode
+	p.feedback = i18n.T("ESCUCHA ") + i18n.T(mode)
 	if p.clearOnly {
 		p.feedback += " · SOLO ABIERTA"
 	} else {
@@ -289,7 +291,7 @@ func (p *TETRAPanel) readViewerCommand() {
 	if p.screen.receiver != nil {
 		p.screen.receiver.ClearTETRA()
 	}
-	p.feedback = fmt.Sprintf("CELDA VECINA · %.6f MHz · DATOS REINICIADOS", float64(command.TuneHz)/1e6)
+	p.feedback = i18n.Tf("CELDA VECINA · %.6f MHz · DATOS REINICIADOS", float64(command.TuneHz)/1e6)
 	p.nextSnapshot = time.Time{}
 }
 
@@ -378,14 +380,14 @@ func (p *TETRAPanel) DrawPanel() {
 		simpleui.DrawText(fmt.Sprintf("TS%d", i+1), x-12, toolY+119, 12, colors.text)
 	}
 	if status.ActiveAudioSlot > 0 {
-		label, color := fmt.Sprintf("TS OBJETIVO TS%d · ESPERANDO TCH", status.ActiveAudioSlot), colors.orange
+		label, color := i18n.Tf("TS OBJETIVO TS%d · ESPERANDO TCH", status.ActiveAudioSlot), colors.orange
 		if status.AudioFrames > 0 && time.Since(status.LastAudio) < time.Second {
-			label, color = fmt.Sprintf("REPRODUCIENDO TS%d", status.ActiveAudioSlot), colors.green
+			label, color = i18n.Tf("REPRODUCIENDO TS%d", status.ActiveAudioSlot), colors.green
 		}
 		simpleui.DrawText(label, 1120, toolY+174, 12, color)
 	}
 	if !status.VoiceCodecReady {
-		simpleui.DrawText("CÓDEC: "+status.VoiceCodecError, 1310, toolY+174, 12, colors.red)
+		simpleui.DrawText(i18n.T("CÓDEC: ")+i18n.T(status.VoiceCodecError), 1310, toolY+174, 12, colors.red)
 	}
 	// Draw each live value in its own fixed column. A single formatted string
 	// shifts every field whenever a signed value gains or loses a digit.
@@ -396,10 +398,10 @@ func (p *TETRAPanel) DrawPanel() {
 	drawTETRAStatusField("CENTRO", fmt.Sprintf("%+6.0f Hz", p.centerError), 945, toolY+72, 145)
 	simpleui.DrawText(fmt.Sprintf("18 ksym/s · BER %5.2f%% · FER %5.1f%% · SYNC %d · NTS %d · AACH %d/%d · SCH %d/%d · MAC %d · CMCE %d", status.BER, status.FER, status.SyncHits, status.NormalBursts, status.AACHValid, status.AACHRejected, status.SCHValid, status.SCHCRCFailures, status.MACResources, status.CMCEEvents), toolContentX, toolY+99, 13, colors.muted)
 	if !status.LastSync.IsZero() {
-		simpleui.DrawText("ÚLTIMA SINCRONÍA  "+status.LastSync.Format("15:04:05"), toolContentX, toolY+124, 13, colors.green)
+		simpleui.DrawText(i18n.T("ÚLTIMA SINCRONÍA  ")+status.LastSync.Format("15:04:05"), toolContentX, toolY+124, 13, colors.green)
 	}
 	if status.System.Valid {
-		simpleui.DrawText(fmt.Sprintf("RED  MCC %d · MNC %d · COLOR %d · TS %d · FN %d · MF %d", status.System.MCC, status.System.MNC, status.System.ColourCode, status.System.Timeslot, status.System.Frame, status.System.Multiframe), toolContentX, toolY+148, 13, colors.green)
+		simpleui.DrawText(i18n.Tf("RED  MCC %d · MNC %d · COLOR %d · TS %d · FN %d · MF %d", status.System.MCC, status.System.MNC, status.System.ColourCode, status.System.Timeslot, status.System.Frame, status.System.Multiframe), toolContentX, toolY+148, 13, colors.green)
 	}
 	constellation := rl.Rectangle{X: 1310, Y: toolY + 72, Width: 150, Height: 108}
 	rl.DrawRectangleRec(constellation, colors.background)

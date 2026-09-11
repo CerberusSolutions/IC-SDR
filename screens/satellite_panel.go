@@ -16,6 +16,8 @@ import (
 	"go-zero/internal/resources"
 	"go-zero/internal/satellite"
 	"go-zero/simpleui"
+
+	"go-zero/internal/i18n"
 )
 
 type SatellitePanel struct {
@@ -208,7 +210,7 @@ func (p *SatellitePanel) selectSearchMatch(sat satellite.Satellite) {
 		}
 	}
 	p.populateSatellites(sat.NORAD)
-	p.feedback = "BÚSQUEDA: " + sat.Name
+	p.feedback = i18n.T("BÚSQUEDA: ") + sat.Name
 }
 func (p *SatellitePanel) refreshSignals(s satellite.Satellite) {
 	items := make([]string, len(s.Signals))
@@ -247,10 +249,10 @@ func (p *SatellitePanel) applyStation() {
 	data, _ := json.MarshalIndent(station, "", "  ")
 	_ = os.MkdirAll(filepath.Dir(p.stationPath), 0755)
 	if err := os.WriteFile(p.stationPath, data, 0644); err != nil {
-		p.feedback = "NO SE PUDO GUARDAR LA ESTACIÓN: " + err.Error()
+		p.feedback = i18n.T("NO SE PUDO GUARDAR LA ESTACIÓN: ") + err.Error()
 		return
 	}
-	p.feedback = "ESTACIÓN APLICADA: " + name
+	p.feedback = i18n.T("ESTACIÓN APLICADA: ") + name
 	p.writeSnapshot(true)
 }
 func (p *SatellitePanel) SetVisible(v bool) {
@@ -274,7 +276,7 @@ func (p *SatellitePanel) Tick() {
 			p.updateDone = nil
 			p.updating = false
 			if err != nil {
-				p.feedback = "ERROR: " + err.Error()
+				p.feedback = i18n.T("ERROR: ") + err.Error()
 			} else {
 				p.feedback = "CATÁLOGO ACTUALIZADO"
 				p.populate()
@@ -338,7 +340,7 @@ func (p *SatellitePanel) tune() {
 		}
 		p.screen.receiver.SetDemodulator(mode, hz, p.screen.demodBandwidthHz)
 	}
-	p.feedback = fmt.Sprintf("SINTONIZADO EN %.6f MHz", float64(hz)/1e6)
+	p.feedback = i18n.Tf("SINTONIZADO EN %.6f MHz", float64(hz)/1e6)
 	p.screen.markSettingsDirty()
 }
 func (p *SatellitePanel) writeSnapshot(force bool) {
@@ -373,7 +375,7 @@ func (p *SatellitePanel) readMapSelection() {
 	for _, sat := range p.sortedSatellites() {
 		if sat.NORAD == norad {
 			p.selectSearchMatch(sat)
-			p.feedback = "SELECCIONADO EN EL MAPA: " + sat.Name
+			p.feedback = i18n.T("SELECCIONADO EN EL MAPA: ") + sat.Name
 			break
 		}
 	}
@@ -436,10 +438,10 @@ func (p *SatellitePanel) DrawPanel() {
 	eye := "BAJO EL HORIZONTE"
 	c := colors.muted
 	if selected.Visible {
-		eye = "VISIBLE DESDE " + snap.Station.Name
+		eye = i18n.T("VISIBLE DESDE ") + snap.Station.Name
 		c = colors.green
 	}
-	simpleui.DrawText("SATÉLITES · "+selected.Name+" · "+eye, 40, toolY+7, 12, c)
+	simpleui.DrawText(i18n.T("SATÉLITES · ")+selected.Name+" · "+eye, 40, toolY+7, 12, c)
 	if p.feedback != "" {
 		simpleui.DrawText(sondeClip(p.feedback, 72), 1035, toolY+7, 11, colors.muted)
 	}

@@ -10,6 +10,8 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"go-zero/internal/tetra"
 	"go-zero/simpleui"
+
+	"go-zero/internal/i18n"
 )
 
 var tetraTabs = []string{"RED", "CELDAS", "GRUPOS", "USUARIOS", "MENSAJES", "GPS", "CONSOLA"}
@@ -80,7 +82,7 @@ func (v *tetraViewer) draw() {
 	if state == "" {
 		state = "ESPERANDO DATOS"
 	}
-	simpleui.DrawText(fmt.Sprintf("%.6f MHz · %s · actualización %s", float64(v.snapshot.FrequencyHz)/1e6, state, viewerTime(v.snapshot.Updated)), 28, 56, 13, colors.muted)
+	simpleui.DrawText(i18n.Tf("%.6f MHz · %s · actualización %s", float64(v.snapshot.FrequencyHz)/1e6, state, viewerTime(v.snapshot.Updated)), 28, 56, 13, colors.muted)
 	mouse := simpleui.MousePosition()
 	for i, name := range tetraTabs {
 		b := rl.Rectangle{X: 24 + float32(i)*193, Y: 88, Width: 179, Height: 45}
@@ -293,9 +295,9 @@ func (v *tetraViewer) drawNetwork() {
 		simpleui.DrawText(c.label, x+18, y+15, 12, colors.muted)
 		simpleui.DrawTextStyled(c.value, x+18, y+43, 30, simpleui.FontMono, colors.text)
 	}
-	simpleui.DrawText(fmt.Sprintf("SYNC %d · NTS1 %d · CRC fallidos %d · calidad %.0f%%", s.SyncHits, s.NormalBursts, s.BSCHFailures, s.Quality), 48, 505, 14, colors.green)
+	simpleui.DrawText(i18n.Tf("SYNC %d · NTS1 %d · CRC fallidos %d · calidad %.0f%%", s.SyncHits, s.NormalBursts, s.BSCHFailures, s.Quality), 48, 505, 14, colors.green)
 	if s.Network.Valid {
-		simpleui.DrawText(fmt.Sprintf("SYSINFO · PORTADORA %d · BANDA %d · DL %.6f MHz · UL %.6f MHz · LA %d · SERVICIOS %03X", s.Network.MainCarrier, s.Network.FrequencyBand, float64(s.Network.DownlinkHz)/1e6, float64(s.Network.UplinkHz)/1e6, s.Network.LocationArea, s.Network.ServiceDetails), 48, 530, 13, colors.cyan)
+		simpleui.DrawText(i18n.Tf("SYSINFO · PORTADORA %d · BANDA %d · DL %.6f MHz · UL %.6f MHz · LA %d · SERVICIOS %03X", s.Network.MainCarrier, s.Network.FrequencyBand, float64(s.Network.DownlinkHz)/1e6, float64(s.Network.UplinkHz)/1e6, s.Network.LocationArea, s.Network.ServiceDetails), 48, 530, 13, colors.cyan)
 	}
 	simpleui.DrawTextStyled("ACTIVIDAD POR TIMESLOT", 48, 565, 14, simpleui.FontSemiBold, colors.cyan)
 	maxBursts := uint64(1)
@@ -348,7 +350,7 @@ func (v *tetraViewer) drawGPS() {
 func (v *tetraViewer) drawConsole() {
 	s := v.snapshot.Status
 	simpleui.DrawTextStyled("CONSOLA TÉCNICA", 48, 175, 18, simpleui.FontSemiBold, colors.cyan)
-	lines := []string{fmt.Sprintf("Estado              %s", s.State), fmt.Sprintf("Entrada/canal       %.0f / %.0f S/s", s.InputRate, s.OutputRate), fmt.Sprintf("Nivel/calidad/AFC   %.1f dBFS / %.1f%% / %+.1f Hz", s.LevelDBFS, s.Quality, s.FrequencyErrorHz), fmt.Sprintf("Timing fase/error   %d / %.3f rad", s.TimingPhase, s.TimingError), fmt.Sprintf("BER / FER           %.2f%% / %.1f%%", s.BER, s.FER), fmt.Sprintf("Decisión de audio   %s", s.LastAudioDecision), fmt.Sprintf("Rechazo E/U/I/D     %d / %d / %d / %d", s.AudioRejectedEncrypted, s.AudioRejectedUnselected, s.AudioRejectedInactive, s.AudioRejectedDamaged), fmt.Sprintf("SYNC / NTS          %d / %d", s.SyncHits, s.NormalBursts), fmt.Sprintf("Actividad TS        %d / %d / %d / %d", s.SlotBursts[0], s.SlotBursts[1], s.SlotBursts[2], s.SlotBursts[3]), fmt.Sprintf("SCH válido/fallo    %d / %d", s.SCHValid, s.SCHCRCFailures), fmt.Sprintf("MAC R/F/B/S         %d / %d / %d / %d", s.MACPDUTypes[0], s.MACPDUTypes[1], s.MACPDUTypes[2], s.MACPDUTypes[3]), fmt.Sprintf("RESOURCE/rechazo    %d / %d", s.MACResources, s.MACRejected), fmt.Sprintf("Asignación/cifrado  %d / %d", s.MACChannelAlloc, s.MACEncrypted), fmt.Sprintf("LLC tipos 0..7      %d %d %d %d %d %d %d %d", s.LLCTypes[0], s.LLCTypes[1], s.LLCTypes[2], s.LLCTypes[3], s.LLCTypes[4], s.LLCTypes[5], s.LLCTypes[6], s.LLCTypes[7]), fmt.Sprintf("LLC tipos 8..15     %d %d %d %d %d %d %d %d", s.LLCTypes[8], s.LLCTypes[9], s.LLCTypes[10], s.LLCTypes[11], s.LLCTypes[12], s.LLCTypes[13], s.LLCTypes[14], s.LLCTypes[15]), fmt.Sprintf("Fragmentos/unidos   %d / %d", s.LLCFragments, s.LLCReassembled), fmt.Sprintf("MLE MM/CMCE/SNDCP   %d / %d / %d", s.MLEProtocols[1], s.MLEProtocols[2], s.MLEProtocols[4]), fmt.Sprintf("LLC no CMCE/rechazo %d / %d", s.LLCNonCMCE, s.LLCRejected), fmt.Sprintf("Eventos CMCE        %d", s.CMCEEvents)}
+	lines := []string{i18n.Tf("Estado              %s", s.State), i18n.Tf("Entrada/canal       %.0f / %.0f S/s", s.InputRate, s.OutputRate), i18n.Tf("Nivel/calidad/AFC   %.1f dBFS / %.1f%% / %+.1f Hz", s.LevelDBFS, s.Quality, s.FrequencyErrorHz), i18n.Tf("Timing fase/error   %d / %.3f rad", s.TimingPhase, s.TimingError), fmt.Sprintf("BER / FER           %.2f%% / %.1f%%", s.BER, s.FER), i18n.Tf("Decisión de audio   %s", s.LastAudioDecision), i18n.Tf("Rechazo E/U/I/D     %d / %d / %d / %d", s.AudioRejectedEncrypted, s.AudioRejectedUnselected, s.AudioRejectedInactive, s.AudioRejectedDamaged), fmt.Sprintf("SYNC / NTS          %d / %d", s.SyncHits, s.NormalBursts), i18n.Tf("Actividad TS        %d / %d / %d / %d", s.SlotBursts[0], s.SlotBursts[1], s.SlotBursts[2], s.SlotBursts[3]), i18n.Tf("SCH válido/fallo    %d / %d", s.SCHValid, s.SCHCRCFailures), fmt.Sprintf("MAC R/F/B/S         %d / %d / %d / %d", s.MACPDUTypes[0], s.MACPDUTypes[1], s.MACPDUTypes[2], s.MACPDUTypes[3]), i18n.Tf("RESOURCE/rechazo    %d / %d", s.MACResources, s.MACRejected), i18n.Tf("Asignación/cifrado  %d / %d", s.MACChannelAlloc, s.MACEncrypted), i18n.Tf("LLC tipos 0..7      %d %d %d %d %d %d %d %d", s.LLCTypes[0], s.LLCTypes[1], s.LLCTypes[2], s.LLCTypes[3], s.LLCTypes[4], s.LLCTypes[5], s.LLCTypes[6], s.LLCTypes[7]), i18n.Tf("LLC tipos 8..15     %d %d %d %d %d %d %d %d", s.LLCTypes[8], s.LLCTypes[9], s.LLCTypes[10], s.LLCTypes[11], s.LLCTypes[12], s.LLCTypes[13], s.LLCTypes[14], s.LLCTypes[15]), i18n.Tf("Fragmentos/unidos   %d / %d", s.LLCFragments, s.LLCReassembled), fmt.Sprintf("MLE MM/CMCE/SNDCP   %d / %d / %d", s.MLEProtocols[1], s.MLEProtocols[2], s.MLEProtocols[4]), i18n.Tf("LLC no CMCE/rechazo %d / %d", s.LLCNonCMCE, s.LLCRejected), i18n.Tf("Eventos CMCE        %d", s.CMCEEvents)}
 	for i, line := range lines {
 		simpleui.DrawTextStyled(line, 58, 216+float32(i)*29, 15, simpleui.FontMono, colors.text)
 	}

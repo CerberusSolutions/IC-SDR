@@ -12,6 +12,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"go-zero/internal/i18n"
 )
 
 type Event struct {
@@ -110,7 +112,7 @@ func (d *Decoder) configureMultichannel(frequencyHz, centerHz int64, bandwidthHz
 	d.children = children
 	d.frequencyHz, d.centerHz, d.bandwidthHz = frequencyHz, centerHz, bandwidthHz
 	d.outputRate = 256_000
-	d.state = fmt.Sprintf("MULTICANAL %d×250 kHz", len(centers))
+	d.state = i18n.Tf("MULTICANAL %d×250 kHz", len(centers))
 	d.lastError = ""
 	d.mu.Unlock()
 	d.running.Store(true)

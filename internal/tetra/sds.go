@@ -5,6 +5,8 @@ import (
 	"math"
 	"strings"
 	"time"
+
+	"go-zero/internal/i18n"
 )
 
 // parseSDS decodes the application payload carried by a CMCE D-SDS-DATA PDU.
@@ -27,7 +29,7 @@ func parseSDS(bits []byte, ssi uint32, now time.Time) (Message, *Position, bool)
 		if !ok {
 			return Message{}, nil, false
 		}
-		text := fmt.Sprintf("SSI %08d · %.6f, %.6f · %.1f km/h · rumbo %.1f° · precisión %.0f m", position.SSI, position.Latitude, position.Longitude, position.SpeedKmh, position.Heading, position.AccuracyM)
+		text := i18n.Tf("SSI %08d · %.6f, %.6f · %.1f km/h · rumbo %.1f° · precisión %.0f m", position.SSI, position.Latitude, position.Longitude, position.SpeedKmh, position.Heading, position.AccuracyM)
 		return Message{Time: now, Kind: "GPS / LIP", Text: text}, &position, true
 	}
 	return Message{}, nil, false

@@ -11,6 +11,8 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"go-zero/internal/ais"
 	"go-zero/simpleui"
+
+	"go-zero/internal/i18n"
 )
 
 //go:embed assets/maps/ais-world.png
@@ -296,7 +298,7 @@ func (v *aisMap) draw() {
 	}
 	v.drawScale(b)
 	simpleui.DrawText("MAPA AIS EN VIVO", 24, 20, 24, colors.cyan)
-	simpleui.DrawText(fmt.Sprintf("%d barcos con señal · arrastra para mover · rueda para zoom", len(v.vessels)), 310, 29, 13, colors.muted)
+	simpleui.DrawText(i18n.Tf("%d barcos con señal · arrastra para mover · rueda para zoom", len(v.vessels)), 310, 29, 13, colors.muted)
 	v.drawDetails()
 	simpleui.DrawText("Natural Earth · cartografía integrada · sin conexión a Internet", 1015, 742, 9, colors.muted)
 }
@@ -321,7 +323,7 @@ func (v *aisMap) drawDetails() {
 		return fmt.Sprintf(format, *p)
 	}
 	age := time.Since(s.LastSeen).Round(time.Second)
-	lines := []struct{ label, val string }{{"NOMBRE", name}, {"MMSI", fmt.Sprintf("%09d", s.MMSI)}, {"CALLSIGN", s.Callsign}, {"TIPO", s.ShipTypeText}, {"ESTADO", s.StatusText}, {"LATITUD", value(s.Latitude, "%.6f°")}, {"LONGITUD", value(s.Longitude, "%.6f°")}, {"VELOCIDAD", value(s.Speed, "%.1f kn")}, {"RUMBO COG", value(s.Course, "%.1f°")}, {"PROA HDG", value(s.Heading, "%.0f°")}, {"DESTINO", s.Destination}, {"MENSAJES", fmt.Sprintf("%d", s.Messages)}, {"ACTUALIZADO", age.String() + " atrás"}}
+	lines := []struct{ label, val string }{{"NOMBRE", name}, {"MMSI", fmt.Sprintf("%09d", s.MMSI)}, {"CALLSIGN", s.Callsign}, {"TIPO", s.ShipTypeText}, {"ESTADO", s.StatusText}, {"LATITUD", value(s.Latitude, "%.6f°")}, {"LONGITUD", value(s.Longitude, "%.6f°")}, {"VELOCIDAD", value(s.Speed, "%.1f kn")}, {"RUMBO COG", value(s.Course, "%.1f°")}, {"PROA HDG", value(s.Heading, "%.0f°")}, {"DESTINO", s.Destination}, {"MENSAJES", fmt.Sprintf("%d", s.Messages)}, {"ACTUALIZADO", age.String() + i18n.T(" atrás")}}
 	for i, line := range lines {
 		y := float32(125 + i*42)
 		simpleui.DrawText(line.label, x, y, 9, colors.muted)

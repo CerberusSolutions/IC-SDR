@@ -4,6 +4,8 @@
 
 **Versión actual: [v0.3.1](https://github.com/LuislopezMartinez/IC-SDR/releases/tag/v0.3.1)**
 
+*English: [README.en.md](README.en.md)*
+
 IC-SDR reúne recepción, demodulación, análisis de espectro y decodificación de señales digitales en una interfaz de escritorio diseñada para el uso diario.
 
 > [!IMPORTANT]

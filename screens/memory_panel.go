@@ -13,6 +13,8 @@ import (
 	"go-zero/simpleui"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
+
+	"go-zero/internal/i18n"
 )
 
 const (
@@ -80,14 +82,14 @@ var memoryGroupPalette = []rl.Color{
 }
 
 func NewMemoryPanel(screen *MainScreen) *MemoryPanel {
-	p := &MemoryPanel{BaseElement: simpleui.NewBaseElement("memoryModal", 0, 0, designWidth, designHeight), screen: screen, selected: -1, lastClicked: -1, selectedGroup: "TODAS", markersVisible: screen.memoryViewEnabled, path: resources.WritablePath("config", "memories.json"), groupColorsPath: resources.WritablePath("config", "memory-groups.json"), groupColors: map[string]string{}, pendingDeleteIndex: -1, pendingEditIndex: -1}
+	p := &MemoryPanel{BaseElement: simpleui.NewBaseElement("memoryModal", 0, 0, designWidth, designHeight), screen: screen, selected: -1, lastClicked: -1, selectedGroup: memoryGroupAll, markersVisible: screen.memoryViewEnabled, path: resources.WritablePath("config", "memories.json"), groupColorsPath: resources.WritablePath("config", "memory-groups.json"), groupColors: map[string]string{}, pendingDeleteIndex: -1, pendingEditIndex: -1}
 	p.load()
 	p.loadGroupColors()
 	p.rebuildGroups()
 	p.viewSwitch = simpleui.NewSwitch("memoryViewSwitch", 1355, 638, 98, 25, "MEM VIEW", screen.memoryViewEnabled, 9)
 	p.viewSwitch.SetTrackColors(rl.Color{R: 51, G: 61, B: 70, A: 255}, colors.blue)
 	p.viewSwitch.OnChange(screen.setMemoryView)
-	p.activeOnly = simpleui.NewButton("memoryOnlyActive", 1462, 638, 98, 25, "TODAS", 9)
+	p.activeOnly = simpleui.NewButton("memoryOnlyActive", 1462, 638, 98, 25, memoryGroupAll, 9)
 	p.addGroup = simpleui.NewButton("memoryAddGroup", 41, 793, 182, 25, "+ NUEVO GRUPO", 11)
 	p.add = simpleui.NewButton("memoryAdd", 1355, 665, 126, 25, "+ MEMORIA", 12)
 	p.markerView = simpleui.NewButton("memoryMarkerView", 1487, 665, 73, 25, "VISTA B", 9)
@@ -123,13 +125,24 @@ func NewMemoryPanel(screen *MainScreen) *MemoryPanel {
 		if p.onlyActive {
 			p.activeOnly.SetLabel("ACTIVAS")
 		} else {
-			p.activeOnly.SetLabel("TODAS")
+			p.activeOnly.SetLabel(memoryGroupAll)
 		}
 	})
 	p.controls = []simpleui.Element{p.viewSwitch, p.addGroup, p.add, p.tune, p.edit, p.duplicate, p.move, p.remove, p.markerView, p.activeOnly}
 	p.SetVisible(false)
 	return p
 }
+
+// memoryGroupAll and memoryGroupNone are reserved group names rather than user
+// data: one filters the list to every memory, the other collects memories with
+// no group of their own. They keep the interface's Spanish wording as their
+// value so the translation catalogue can render them, and they are never
+// written to memories.json — an ungrouped memory is stored with an empty group,
+// which carries the same meaning in any language.
+const (
+	memoryGroupAll  = "TODAS"
+	memoryGroupNone = "SIN GRUPO"
+)
 
 func (p *MemoryPanel) loadGroupColors() {
 	data, err := os.ReadFile(p.groupColorsPath)
@@ -156,13 +169,13 @@ func parseColorHex(value string, fallback rl.Color) rl.Color {
 	return fallback
 }
 func (p *MemoryPanel) groupColor(group string) rl.Color {
-	if group == "TODAS" || group == "SIN GRUPO" {
+	if group == memoryGroupAll || group == memoryGroupNone {
 		return colors.cyan
 	}
 	return parseColorHex(p.groupColors[group], colors.cyan)
 }
 func (p *MemoryPanel) editSelection() {
-	if p.selectedGroup != "TODAS" && p.selected < 0 {
+	if p.selectedGroup != memoryGroupAll && p.selected < 0 {
 		p.openGroupModal()
 		return
 	}
@@ -243,7 +256,7 @@ func (p *MemoryPanel) commitEdit() {
 	p.closeModal()
 }
 func (p *MemoryPanel) openGroupModal() {
-	if p.selectedGroup == "" || p.selectedGroup == "TODAS" || p.selectedGroup == "SIN GRUPO" {
+	if p.selectedGroup == "" || p.selectedGroup == memoryGroupAll || p.selectedGroup == memoryGroupNone {
 		return
 	}
 	p.pendingOriginalGroup, p.pendingGroup, p.pendingMoveGroup = p.selectedGroup, p.selectedGroup, ""
@@ -272,7 +285,7 @@ func (p *MemoryPanel) commitGroupColor() {
 	if original == "" {
 		original = name
 	}
-	if name == "" || strings.EqualFold(name, "TODAS") || strings.EqualFold(name, "SIN GRUPO") {
+	if name == "" || strings.EqualFold(name, memoryGroupAll) || strings.EqualFold(name, memoryGroupNone) {
 		p.editError = "Introduce un nombre de grupo válido."
 		return
 	}
@@ -303,11 +316,11 @@ func (p *MemoryPanel) commitGroupColor() {
 func (p *MemoryPanel) deleteEditedGroup() {
 	for i := range p.memories {
 		if memoryGroup(p.memories[i]) == p.pendingOriginalGroup {
-			p.memories[i].Group = "SIN GRUPO"
+			p.memories[i].Group = memoryGroupNone
 		}
 	}
 	delete(p.groupColors, p.pendingOriginalGroup)
-	p.selectedGroup, p.selected = "TODAS", -1
+	p.selectedGroup, p.selected = memoryGroupAll, -1
 	p.save()
 	p.saveGroupColors()
 	p.rebuildGroups()
@@ -315,9 +328,9 @@ func (p *MemoryPanel) deleteEditedGroup() {
 }
 
 func (p *MemoryPanel) moveEditedGroup() {
-	targets := []string{"", "SIN GRUPO"}
+	targets := []string{"", memoryGroupNone}
 	for _, group := range p.groups {
-		if group != "TODAS" && group != p.pendingOriginalGroup && group != "SIN GRUPO" {
+		if group != memoryGroupAll && group != p.pendingOriginalGroup && group != memoryGroupNone {
 			targets = append(targets, group)
 		}
 	}
@@ -342,7 +355,7 @@ func (p *MemoryPanel) groupExists(name string) bool {
 
 func (p *MemoryPanel) commitNewGroup() {
 	name := strings.TrimSpace(p.pendingGroup)
-	if name == "" || strings.EqualFold(name, "TODAS") || strings.EqualFold(name, "SIN GRUPO") || p.groupExists(name) {
+	if name == "" || strings.EqualFold(name, memoryGroupAll) || strings.EqualFold(name, memoryGroupNone) || p.groupExists(name) {
 		return
 	}
 	p.groupColors[name] = colorHex(memoryGroupPalette[p.pendingGroupColor])
@@ -360,7 +373,7 @@ func (p *MemoryPanel) SetVisible(visible bool) {
 		if p.selected >= 0 && p.selected < len(p.memories) {
 			p.edit.SetLabel("EDITAR MEMORIA")
 			p.edit.SetEnabled(true)
-		} else if p.selectedGroup != "TODAS" {
+		} else if p.selectedGroup != memoryGroupAll {
 			p.edit.SetLabel("EDITAR GRUPO")
 			p.edit.SetEnabled(true)
 		} else {
@@ -438,15 +451,30 @@ func (p *MemoryPanel) normalizeMemoryModes() bool {
 }
 func (p *MemoryPanel) save() {
 	_ = os.MkdirAll(filepath.Dir(p.path), 0755)
-	data, _ := json.MarshalIndent(p.memories, "", "  ")
+	data, _ := json.MarshalIndent(p.persistableMemories(), "", "  ")
 	_ = os.WriteFile(p.path, data, 0644)
+}
+
+// persistableMemories returns the memory list as it should appear on disk, with
+// the reserved "no group" sentinel replaced by an empty group. memoryGroup
+// reads an empty group back as the sentinel, so files written by earlier
+// versions that stored the Spanish wording keep loading unchanged.
+func (p *MemoryPanel) persistableMemories() []MemoryEntry {
+	stored := make([]MemoryEntry, len(p.memories))
+	copy(stored, p.memories)
+	for i := range stored {
+		if stored[i].Group == memoryGroupNone {
+			stored[i].Group = ""
+		}
+	}
+	return stored
 }
 func (p *MemoryPanel) rebuildGroups() {
 	seen := map[string]bool{}
-	p.groups = []string{"TODAS"}
+	p.groups = []string{memoryGroupAll}
 	custom := make([]string, 0, len(p.groupColors))
 	for group := range p.groupColors {
-		if group != "" && group != "TODAS" && group != "SIN GRUPO" {
+		if group != "" && group != memoryGroupAll && group != memoryGroupNone {
 			custom = append(custom, group)
 		}
 	}
@@ -463,21 +491,21 @@ func (p *MemoryPanel) rebuildGroups() {
 		}
 	}
 	if p.selectedGroup == "" {
-		p.selectedGroup = "TODAS"
+		p.selectedGroup = memoryGroupAll
 	}
-	found := p.selectedGroup == "TODAS"
+	found := p.selectedGroup == memoryGroupAll
 	for _, group := range p.groups {
 		found = found || group == p.selectedGroup
 	}
 	if !found {
-		p.selectedGroup = "TODAS"
+		p.selectedGroup = memoryGroupAll
 	}
 }
 
 func (p *MemoryPanel) openSaveModal() {
 	name := fmt.Sprintf("MEM %02d", len(p.memories)+1)
-	group := "SIN GRUPO"
-	if p.selectedGroup != "" && p.selectedGroup != "TODAS" {
+	group := memoryGroupNone
+	if p.selectedGroup != "" && p.selectedGroup != memoryGroupAll {
 		group = p.selectedGroup
 	}
 	p.pendingMemory = MemoryEntry{Name: name, FrequencyHz: p.screen.frequencyHz, Mode: p.screen.mode.SelectedText(), FilterBandwidthHz: p.screen.demodBandwidthHz, StepHz: p.screen.tuningStepHz, ScanEnabled: true, Group: group}
@@ -550,7 +578,7 @@ func (p *MemoryPanel) moveSelectedToNextGroup() {
 		groups = p.groups[1:]
 	}
 	if len(groups) == 0 {
-		groups = []string{"SIN GRUPO"}
+		groups = []string{memoryGroupNone}
 	}
 	current := p.memories[p.selected].Group
 	next := 0
@@ -829,9 +857,9 @@ func (p *MemoryPanel) editFieldBounds() []rl.Rectangle {
 }
 
 func (p *MemoryPanel) editGroups() []string {
-	result := []string{"SIN GRUPO"}
+	result := []string{memoryGroupNone}
 	for _, group := range p.groups {
-		if group != "" && group != "TODAS" && group != "SIN GRUPO" {
+		if group != "" && group != memoryGroupAll && group != memoryGroupNone {
 			result = append(result, group)
 		}
 	}
@@ -934,7 +962,7 @@ func (p *MemoryPanel) drawGroupModalContent() {
 			count++
 		}
 	}
-	simpleui.DrawTextStyled(fmt.Sprintf("%d MEMORIAS", count), 500, 412, 15, simpleui.FontSemiBold, colors.text)
+	simpleui.DrawTextStyled(i18n.Tf("%d MEMORIAS", count), 500, 412, 15, simpleui.FontSemiBold, colors.text)
 	drawGroupToggle := func(bounds rl.Rectangle, label string, active bool) {
 		accent, state := colors.border, "OFF"
 		if active {
@@ -948,7 +976,7 @@ func (p *MemoryPanel) drawGroupModalContent() {
 	drawGroupToggle(rl.Rectangle{X: 815, Y: 450, Width: 285, Height: 42}, "PRIORIDAD", p.pendingGroupPriority)
 	moveLabel := "NO MOVER"
 	if p.pendingMoveGroup != "" {
-		moveLabel = "MOVER A: " + p.pendingMoveGroup
+		moveLabel = i18n.T("MOVER A: ") + i18n.T(p.pendingMoveGroup)
 	}
 	drawModalAction(rl.Rectangle{X: 500, Y: 520, Width: 285, Height: 48}, moveLabel, colors.border, false)
 	drawModalAction(rl.Rectangle{X: 815, Y: 520, Width: 285, Height: 48}, "ELIMINAR GRUPO", colors.red, false)
@@ -978,7 +1006,7 @@ func (p *MemoryPanel) drawNewGroupModalContent() {
 		rl.DrawRectangleRoundedLinesEx(bounds, .18, 6, width, colors.text)
 	}
 	message := "Escribe un nombre y elige un color. Pulsa Enter para crear."
-	if p.groupExists(p.pendingGroup) || strings.EqualFold(strings.TrimSpace(p.pendingGroup), "TODAS") || strings.EqualFold(strings.TrimSpace(p.pendingGroup), "SIN GRUPO") {
+	if p.groupExists(p.pendingGroup) || strings.EqualFold(strings.TrimSpace(p.pendingGroup), memoryGroupAll) || strings.EqualFold(strings.TrimSpace(p.pendingGroup), memoryGroupNone) {
 		message = "Ese nombre ya existe o está reservado."
 	}
 	drawCentered(message, rl.Rectangle{X: 490, Y: 488, Width: 620, Height: 18}, 12, colors.muted)
@@ -990,7 +1018,7 @@ func (p *MemoryPanel) drawSaveModalContent() {
 	drawCentered(detail, rl.Rectangle{X: 490, Y: 374, Width: 620, Height: 28}, 16, colors.cyan)
 	if len(p.duplicateNames) > 0 {
 		drawCentered("ESTA FRECUENCIA YA ESTÁ MEMORIZADA", rl.Rectangle{X: 490, Y: 420, Width: 620, Height: 28}, 16, colors.orange)
-		drawCentered("Existente: "+strings.Join(p.duplicateNames, ", "), rl.Rectangle{X: 490, Y: 452, Width: 620, Height: 24}, 13, colors.text)
+		drawCentered(i18n.T("Existente: ")+strings.Join(p.duplicateNames, ", "), rl.Rectangle{X: 490, Y: 452, Width: 620, Height: 24}, 13, colors.text)
 		drawCentered("Se guardará una segunda memoria en la misma frecuencia.", rl.Rectangle{X: 490, Y: 478, Width: 620, Height: 22}, 12, colors.muted)
 	}
 }
@@ -1000,7 +1028,7 @@ func (p *MemoryPanel) drawDeleteModalContent() {
 		return
 	}
 	memory := p.memories[p.pendingDeleteIndex]
-	drawCentered(memory.Name, rl.Rectangle{X: 490, Y: 352, Width: 620, Height: 32}, 20, colors.text)
+	drawCenteredRaw(memory.Name, rl.Rectangle{X: 490, Y: 352, Width: 620, Height: 32}, 20, colors.text)
 	drawCentered(fmt.Sprintf("%.6f MHz  ·  %s", float64(memory.FrequencyHz)/1e6, memory.Mode), rl.Rectangle{X: 490, Y: 394, Width: 620, Height: 28}, 16, colors.cyan)
 	drawCentered("Esta acción no se puede deshacer.", rl.Rectangle{X: 490, Y: 448, Width: 620, Height: 24}, 14, colors.muted)
 }
@@ -1084,7 +1112,7 @@ func (p *MemoryPanel) DrawPanel() {
 		drawMemoryText(g, 54, y, groupColor)
 		count := 0
 		for _, m := range p.memories {
-			if g == "TODAS" || memoryGroup(m) == g {
+			if g == memoryGroupAll || memoryGroup(m) == g {
 				count++
 			}
 		}
@@ -1120,7 +1148,7 @@ func (p *MemoryPanel) DrawPanel() {
 			star = "★"
 		}
 		drawMemoryText(active, 257, yy, activeColor)
-		drawMemoryText(trimMemory(m.Name, 20), 300, yy, groupColor)
+		drawMemoryName(trimMemory(m.Name, 20), 300, yy, groupColor)
 		drawMemoryText(fmt.Sprintf("%.6f", float64(m.FrequencyHz)/1e6), 600, yy, rowText)
 		drawMemoryText(m.Mode, 800, yy, rowText)
 		drawMemoryText(formatFilterBandwidth(m.FilterBandwidthHz), 900, yy, rowText)
@@ -1175,7 +1203,7 @@ func (p *MemoryPanel) Tick() {
 			p.selectedGroup = p.groups[row]
 			p.scrollOffset = 0
 			p.selected = -1
-			if p.selectedGroup == "TODAS" {
+			if p.selectedGroup == memoryGroupAll {
 				p.edit.SetLabel("EDITAR MEMORIA")
 				p.edit.SetEnabled(false)
 			} else {
@@ -1217,7 +1245,7 @@ func (p *MemoryPanel) Tick() {
 func (p *MemoryPanel) filteredIndices() []int {
 	indices := make([]int, 0, len(p.memories))
 	for i, memory := range p.memories {
-		groupMatches := p.selectedGroup == "TODAS" || memoryGroup(memory) == p.selectedGroup
+		groupMatches := p.selectedGroup == memoryGroupAll || memoryGroup(memory) == p.selectedGroup
 		if groupMatches && (!p.onlyActive || memory.ScanEnabled) {
 			indices = append(indices, i)
 		}
@@ -1268,13 +1296,20 @@ func drawMemoryText(text string, x, y float32, color rl.Color) {
 	simpleui.DrawTextStyled(text, x, y-2, 12, simpleui.FontRegular, color)
 }
 
+// drawMemoryName draws text the user typed. It bypasses the translator so a
+// memory or group called, say, RED is never redrawn as NETWORK when the
+// interface is in English.
+func drawMemoryName(text string, x, y float32, color rl.Color) {
+	simpleui.DrawTextStyledRaw(text, x, y-2, 12, simpleui.FontRegular, color)
+}
+
 func drawColumnHeader(text string, x, y float32, color rl.Color) {
 	simpleui.DrawTextStyled(text, x, y-2, 11, simpleui.FontSemiBold, color)
 }
 
 func memoryGroup(memory MemoryEntry) string {
 	if strings.TrimSpace(memory.Group) == "" {
-		return "SIN GRUPO"
+		return memoryGroupNone
 	}
 	return memory.Group
 }
@@ -1305,7 +1340,7 @@ func (p *MemoryPanel) DrawMarkers(x, y, w, h float32) {
 		if !p.compact {
 			label = trimMemory(m.Name, 12)
 		}
-		tw := simpleui.MeasureTextStyled(label, 11, simpleui.FontSemiBold).X
+		tw := simpleui.MeasureTextStyledRaw(label, 11, simpleui.FontSemiBold).X
 		left := min(max(mx-tw/2-6, x+52), x+w-tw-15)
 		lane := -1
 		for candidate := range laneRight {
@@ -1324,7 +1359,7 @@ func (p *MemoryPanel) DrawMarkers(x, y, w, h float32) {
 		labelBackground.A = 242
 		rl.DrawRectangleRounded(bounds, .2, 4, labelBackground)
 		rl.DrawRectangleRoundedLinesEx(bounds, .2, 4, 1, color)
-		simpleui.DrawTextStyled(label, left+6, labelY+3, 11, simpleui.FontSemiBold, simpleui.EnsureTextContrast(color, labelBackground))
+		simpleui.DrawTextStyledRaw(label, left+6, labelY+3, 11, simpleui.FontSemiBold, simpleui.EnsureTextContrast(color, labelBackground))
 		laneRight[lane] = left + tw + 12
 	}
 }
@@ -1365,9 +1400,9 @@ func (p *MemoryPanel) DrawMarkerTooltip(x, y, w, h float32) bool {
 	rl.DrawRectangleRoundedLinesEx(card, .08, 5, 2, groupColor)
 	mainText := simpleui.EnsureTextContrast(colors.text, cardBackground)
 	accentText := simpleui.EnsureTextContrast(groupColor, cardBackground)
-	simpleui.DrawTextStyled(trimMemory(m.Name, 30), cardX+14, cardY+10, 17, simpleui.FontSemiBold, mainText)
+	simpleui.DrawTextStyledRaw(trimMemory(m.Name, 30), cardX+14, cardY+10, 17, simpleui.FontSemiBold, mainText)
 	simpleui.DrawTextStyled(fmt.Sprintf("%.6f MHz   %s", float64(m.FrequencyHz)/1e6, m.Mode), cardX+14, cardY+39, 15, simpleui.FontMono, accentText)
-	detail := fmt.Sprintf("FILTRO %s   STEP %s", formatFilterBandwidth(m.FilterBandwidthHz), formatStep(m.StepHz))
+	detail := i18n.Tf("FILTRO %s   STEP %s", formatFilterBandwidth(m.FilterBandwidthHz), formatStep(m.StepHz))
 	if m.CTCSSHz != "" {
 		detail += "   CTCSS " + m.CTCSSHz
 	} else if m.DCSCode != "" {

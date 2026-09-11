@@ -15,6 +15,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"go-zero/internal/i18n"
 )
 
 type Station struct {
@@ -141,7 +143,7 @@ func (t *Tracker) Refresh(ctx context.Context) error {
 	})
 	t.mu.Lock()
 	t.satellites = list
-	t.source = "CelesTrak · " + time.Now().Format("02 Jan 15:04")
+	t.source = i18n.T("CelesTrak · ") + time.Now().Format("02 Jan 15:04")
 	t.mu.Unlock()
 	return t.saveCache()
 }
@@ -318,7 +320,7 @@ func (t *Tracker) loadCache() error {
 		return errors.New("cache inválida")
 	}
 	t.satellites = c.Satellites
-	t.source = "caché CelesTrak · " + c.Saved.Format("02 Jan 15:04")
+	t.source = i18n.T("caché CelesTrak · ") + c.Saved.Format("02 Jan 15:04")
 	return nil
 }
 

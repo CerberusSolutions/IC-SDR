@@ -11,6 +11,8 @@ import (
 	"go-zero/internal/ais"
 	"go-zero/internal/resources"
 	"go-zero/simpleui"
+
+	"go-zero/internal/i18n"
 )
 
 type AISPanel struct {
@@ -172,9 +174,9 @@ func (p *AISPanel) DrawPanel() {
 		status = p.screen.receiver.AISStatus()
 		vessels = p.screen.receiver.AISVessels()
 	}
-	simpleui.DrawText(fmt.Sprintf("AIS MARÍTIMO · 161.975 / 162.025 MHz · %s · %d barcos · %d mensajes", status.State, len(vessels), status.Messages), 40, toolY+7, 12, colors.cyan)
+	simpleui.DrawText(i18n.Tf("AIS MARÍTIMO · 161.975 / 162.025 MHz · %s · %d barcos · %d mensajes", status.State, len(vessels), status.Messages), 40, toolY+7, 12, colors.cyan)
 	if status.Error != "" {
-		simpleui.DrawText(sondeClip(status.Error, 100), 570, toolY+38, 12, colors.red)
+		simpleui.DrawText(sondeClip(i18n.T(status.Error), 100), 570, toolY+38, 12, colors.red)
 	} else {
 		simpleui.DrawText("Recepción simultánea de los dos canales AIS", 570, toolY+38, 12, colors.muted)
 	}
@@ -215,5 +217,5 @@ func (p *AISPanel) DrawPanel() {
 	if len(vessels) == 0 {
 		simpleui.DrawText("Pulsa INICIAR para decodificar AIS desde el receptor SDR. ABRIR MAPA muestra las posiciones en otra ventana.", 40, toolY+110, 13, colors.muted)
 	}
-	simpleui.DrawText(sondeClip(p.feedback+"  AIS-catcher · mapa local sin conexión a Internet", 150), 40, toolY+174, 12, colors.muted)
+	simpleui.DrawText(sondeClip(i18n.T(p.feedback)+i18n.T("  AIS-catcher · mapa local sin conexión a Internet"), 150), 40, toolY+174, 12, colors.muted)
 }

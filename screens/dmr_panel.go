@@ -9,6 +9,8 @@ import (
 	"go-zero/simpleui"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
+
+	"go-zero/internal/i18n"
 )
 
 type dmrEvent struct {
@@ -148,10 +150,10 @@ func (p *DMRPanel) DrawPanel() {
 	if status.ColorCode >= 0 {
 		cc = fmt.Sprint(status.ColorCode)
 	}
-	simpleui.DrawText(fmt.Sprintf("COLOR CODE  %s", cc), 52, 711, 13, colors.text)
-	simpleui.DrawText(fmt.Sprintf("PLL  %s", map[bool]string{true: "BLOQUEADO", false: "SIN LOCK"}[status.PLLLocked]), 52, 734, 13, colors.text)
-	simpleui.DrawText(fmt.Sprintf("SYNC %d   NIVEL %d", status.SyncQuality, status.InputLevel), 52, 757, 13, colors.text)
-	simpleui.DrawText(fmt.Sprintf("COLA %d/%d   DROP %d   UND %d", status.Queued, status.Capacity, status.Dropped, p.screen.stats.AudioUnderflows), 52, 780, 12, colors.muted)
+	simpleui.DrawText(i18n.Tf("COLOR CODE  %s", cc), 52, 711, 13, colors.text)
+	simpleui.DrawText(fmt.Sprintf("PLL  %s", i18n.T(map[bool]string{true: "BLOQUEADO", false: "SIN LOCK"}[status.PLLLocked])), 52, 734, 13, colors.text)
+	simpleui.DrawText(i18n.Tf("SYNC %d   NIVEL %d", status.SyncQuality, status.InputLevel), 52, 757, 13, colors.text)
+	simpleui.DrawText(i18n.Tf("COLA %d/%d   DROP %d   UND %d", status.Queued, status.Capacity, status.Dropped, p.screen.stats.AudioUnderflows), 52, 780, 12, colors.muted)
 	p.drawSlot(262, 665, "TIME SLOT 1", status.Slot1, p.screen.dmrAudioSlot == "TS1")
 	p.drawSlot(262, 738, "TIME SLOT 2", status.Slot2, p.screen.dmrAudioSlot == "TS2")
 	p.drawEvents(530, 665, 730, 142)

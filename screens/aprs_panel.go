@@ -16,6 +16,8 @@ import (
 	"go-zero/internal/aprs"
 	"go-zero/internal/resources"
 	"go-zero/simpleui"
+
+	"go-zero/internal/i18n"
 )
 
 type APRSPanel struct {
@@ -32,13 +34,35 @@ type APRSPanel struct {
 	viewerDone       chan struct{}
 }
 
+// APRS view identifiers. These are stored in settings.json, so they are
+// language-neutral keys rather than the Spanish words the buttons show; the
+// button labels are translated for display like any other interface string.
+const (
+	aprsViewPackets  = "PACKETS"
+	aprsViewStations = "STATIONS"
+	aprsViewMessages = "MESSAGES"
+	aprsViewRadar    = "RADAR"
+	aprsViewRaw      = "RAW"
+)
+
+// aprsViews lists every valid identifier in the order the buttons appear.
+var aprsViews = []string{aprsViewPackets, aprsViewStations, aprsViewMessages, aprsViewRadar, aprsViewRaw}
+
+// legacyAPRSViews maps the Spanish identifiers written by IC-SDR up to
+// settings version 1 onto the current ones.
+var legacyAPRSViews = map[string]string{
+	"PAQUETES":   aprsViewPackets,
+	"ESTACIONES": aprsViewStations,
+	"MENSAJES":   aprsViewMessages,
+}
+
 func NewAPRSPanel(screen *MainScreen) *APRSPanel {
-	p := &APRSPanel{screen: screen, view: "PAQUETES", buttons: map[string]*simpleui.Button{}, selected: -1, snapshotPath: resources.WritablePath("cache", "aprs-captures.json")}
+	p := &APRSPanel{screen: screen, view: aprsViewPackets, buttons: map[string]*simpleui.Button{}, selected: -1, snapshotPath: resources.WritablePath("cache", "aprs-captures.json")}
 	items := []struct {
 		id, label string
 		w         float32
 		color     rl.Color
-	}{{"PAQUETES", "PAQUETES", 120, colors.blue}, {"ESTACIONES", "ESTACIONES", 130, colors.panelAlt}, {"MENSAJES", "MENSAJES", 120, colors.panelAlt}, {"RADAR", "RADAR", 100, colors.panelAlt}, {"RAW", "RAW", 85, colors.panelAlt}}
+	}{{aprsViewPackets, "PAQUETES", 120, colors.blue}, {aprsViewStations, "ESTACIONES", 130, colors.panelAlt}, {aprsViewMessages, "MENSAJES", 120, colors.panelAlt}, {aprsViewRadar, "RADAR", 100, colors.panelAlt}, {aprsViewRaw, "RAW", 85, colors.panelAlt}}
 	x := float32(40)
 	for _, item := range items {
 		b := simpleui.NewButton("aprs"+item.id, x, 660, item.w, 40, item.label, uiControlFontSize)
@@ -153,7 +177,7 @@ func (p *APRSPanel) Tick() {
 	}
 	packets := p.filtered()
 	visible := 5
-	if p.view == "RADAR" {
+	if p.view == aprsViewRadar {
 		return
 	}
 	wheel := rl.GetMouseWheelMove()
@@ -218,7 +242,7 @@ func (p *APRSPanel) openViewer() {
 }
 func (p *APRSPanel) filtered() []aprs.Packet {
 	packets := p.packets()
-	if p.view == "MENSAJES" {
+	if p.view == aprsViewMessages {
 		out := packets[:0]
 		for _, packet := range packets {
 			if packet.Type == "MESSAGE" || packet.Type == "ACK" || packet.Type == "REJ" {
@@ -227,7 +251,7 @@ func (p *APRSPanel) filtered() []aprs.Packet {
 		}
 		return out
 	}
-	if p.view == "ESTACIONES" {
+	if p.view == aprsViewStations {
 		seen := map[string]bool{}
 		out := []aprs.Packet{}
 		for _, packet := range packets {
@@ -253,13 +277,13 @@ func (p *APRSPanel) DrawPanel() {
 		stateColor = colors.red
 	}
 	rl.DrawCircle(720, 646, 6, stateColor)
-	simpleui.DrawTextStyled(fmt.Sprintf("%s · %.3f MHz · NIVEL %s · RX %d · ERR %+.0f Hz", status.State, float64(p.screen.frequencyHz)/1e6, levelText(status.AudioLevel), status.PacketCount, status.FrequencyErrorHz), 735, 638, 12, simpleui.FontSemiBold, colors.muted)
+	simpleui.DrawTextStyled(i18n.Tf("%s · %.3f MHz · NIVEL %s · RX %d · ERR %+.0f Hz", status.State, float64(p.screen.frequencyHz)/1e6, levelText(status.AudioLevel), status.PacketCount, status.FrequencyErrorHz), 735, 638, 12, simpleui.FontSemiBold, colors.muted)
 	drawPanel(40, 712, 220, 94)
 	simpleui.DrawTextStyled("RECEPTOR", 52, 721, 12, simpleui.FontSemiBold, colors.cyan)
-	simpleui.DrawText(fmt.Sprintf("KISS  %s", map[bool]string{true: "CONECTADO", false: "ESPERANDO"}[status.KISS]), 52, 745, 13, colors.text)
-	simpleui.DrawText(fmt.Sprintf("COLA %d/16 · DROP %d", status.Queued, status.Dropped), 52, 766, 12, colors.text)
+	simpleui.DrawText(fmt.Sprintf("KISS  %s", i18n.T(map[bool]string{true: "CONECTADO", false: "ESPERANDO"}[status.KISS])), 52, 745, 13, colors.text)
+	simpleui.DrawText(i18n.Tf("COLA %d/16 · DROP %d", status.Queued, status.Dropped), 52, 766, 12, colors.text)
 	simpleui.DrawText(short(status.Detail, 28), 52, 787, 12, colors.muted)
-	if p.view == "RADAR" {
+	if p.view == aprsViewRadar {
 		p.drawRadar()
 		return
 	}
@@ -313,9 +337,9 @@ func (p *APRSPanel) drawTable(packets []aprs.Packet) {
 		}
 		simpleui.DrawText(short(path, 25), 700, y, 12, colors.text)
 		info := packet.Summary
-		if p.view == "RAW" {
+		if p.view == aprsViewRaw {
 			info = packet.Raw
-		} else if p.view == "ESTACIONES" && packet.Coordinates != "—" {
+		} else if p.view == aprsViewStations && packet.Coordinates != "—" {
 			info = packet.Coordinates + " · " + packet.Summary
 		}
 		simpleui.DrawText(short(info, 43), 900, y, 12, colors.text)
@@ -354,7 +378,7 @@ func (p *APRSPanel) drawRadar() {
 		simpleui.DrawText(v.Source, x+7, y-6, 12, colors.text)
 	}
 	simpleui.DrawText("VISTA RELATIVA OFFLINE", 290, 725, 12, colors.cyan)
-	simpleui.DrawText(fmt.Sprintf("%d estaciones con posición", len(packets)), 290, 748, 13, colors.text)
+	simpleui.DrawText(i18n.Tf("%d estaciones con posición", len(packets)), 290, 748, 13, colors.text)
 	simpleui.DrawText("Sin conexión a Internet", 290, 772, 12, colors.muted)
 }
 func (p *APRSPanel) filteredPositions() []aprs.Packet {

@@ -295,6 +295,12 @@ func drawCentered(text string, bounds rl.Rectangle, size int32, color rl.Color) 
 
 }
 
+// drawCenteredRaw centres text the user typed, bypassing the translator.
+func drawCenteredRaw(text string, bounds rl.Rectangle, size int32, color rl.Color) {
+	measured := simpleui.MeasureTextStyledRaw(text, size, simpleui.FontRegular)
+	simpleui.DrawTextStyledRaw(text, bounds.X+(bounds.Width-measured.X)/2, bounds.Y+(bounds.Height-measured.Y)/2, size, simpleui.FontRegular, color)
+}
+
 func drawCenteredStyled(text string, bounds rl.Rectangle, size int32, style simpleui.FontStyle, color rl.Color) {
 	measured := simpleui.MeasureTextStyled(text, size, style)
 	simpleui.DrawTextStyled(text, bounds.X+(bounds.Width-measured.X)/2, bounds.Y+(bounds.Height-measured.Y)/2, size, style, color)

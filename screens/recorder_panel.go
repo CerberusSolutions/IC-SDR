@@ -7,6 +7,8 @@ import (
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"go-zero/simpleui"
+
+	"go-zero/internal/i18n"
 )
 
 type RecorderPanel struct {
@@ -123,7 +125,7 @@ func (p *RecorderPanel) refresh() {
 	p.format.SetEnabled(!state.Recording)
 	p.toolFormat.SetEnabled(!state.Recording)
 	p.format.SetLabel(state.Format)
-	p.toolFormat.SetLabel("FORMATO " + state.Format)
+	p.toolFormat.SetLabel(i18n.T("FORMATO ") + state.Format)
 	p.skip.SetActive(state.SkipSquelchSilence)
 	p.toolSkip.SetActive(state.SkipSquelchSilence)
 }
@@ -259,7 +261,7 @@ func (p *RecorderPanel) DrawPanel() {
 	simpleui.DrawTextStyled(status, 64, 649, 16, simpleui.FontSemiBold, colors.text)
 	simpleui.DrawTextStyled(formatRecordingDuration(state.DurationSeconds), 64, 676, 24, simpleui.FontMono, colors.text)
 	drawRecorderMeter(330, 650, 270, 38, state.PeakDBFS, state.Recording && !state.Paused)
-	detail := recorderFormatDescription(state.Format) + " · ARCHIVO ÚNICO POR SESIÓN"
+	detail := i18n.T(recorderFormatDescription(state.Format)) + i18n.T(" · ARCHIVO ÚNICO POR SESIÓN")
 	if state.Encoding {
 		detail = "CREANDO MP3…"
 	} else if state.LastError != "" {
