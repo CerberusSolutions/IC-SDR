@@ -913,7 +913,7 @@ func (p *MemoryPanel) drawEditModalContent() {
 		}
 		rl.DrawRectangleRounded(bounds, .12, 6, colors.panelAlt)
 		rl.DrawRectangleRoundedLinesEx(bounds, .12, 6, 2, accent)
-		drawCentered(label+"  "+state, bounds, 14, colors.text)
+		drawCentered(i18n.T(label)+"  "+state, bounds, 14, colors.text)
 	}
 	drawEditToggle(rl.Rectangle{X: 500, Y: 620, Width: 285, Height: 42}, "INCLUIR EN ESCÁNER", p.pendingMemory.ScanEnabled)
 	drawEditToggle(rl.Rectangle{X: 815, Y: 620, Width: 285, Height: 42}, "PRIORIDAD", p.pendingMemory.Priority)
@@ -943,7 +943,7 @@ func (p *MemoryPanel) drawGroupModalContent() {
 	field := rl.Rectangle{X: 500, Y: 278, Width: 600, Height: 48}
 	rl.DrawRectangleRounded(field, .1, 6, simpleui.CurrentTheme().InputBackground)
 	rl.DrawRectangleRoundedLinesEx(field, .1, 6, 2, colors.cyan)
-	simpleui.DrawText(p.pendingGroup+"|", 514, 293, 17, colors.text)
+	simpleui.DrawTextRaw(p.pendingGroup+"|", 514, 293, 17, colors.text)
 	simpleui.DrawText("COLOR", 500, 362, 14, colors.muted)
 	for i, bounds := range p.groupColorBounds() {
 		c := memoryGroupPalette[i]
@@ -970,7 +970,7 @@ func (p *MemoryPanel) drawGroupModalContent() {
 		}
 		rl.DrawRectangleRounded(bounds, .12, 6, colors.panelAlt)
 		rl.DrawRectangleRoundedLinesEx(bounds, .12, 6, 2, accent)
-		drawCentered(label+"  "+state, bounds, 14, colors.text)
+		drawCentered(i18n.T(label)+"  "+state, bounds, 14, colors.text)
 	}
 	drawGroupToggle(rl.Rectangle{X: 500, Y: 450, Width: 285, Height: 42}, "INCLUIR EN ESCÁNER", p.pendingGroupScan)
 	drawGroupToggle(rl.Rectangle{X: 815, Y: 450, Width: 285, Height: 42}, "PRIORIDAD", p.pendingGroupPriority)
@@ -989,12 +989,13 @@ func (p *MemoryPanel) drawNewGroupModalContent() {
 	field := rl.Rectangle{X: 500, Y: 330, Width: 600, Height: 38}
 	rl.DrawRectangleRounded(field, .12, 6, simpleui.CurrentTheme().InputBackground)
 	rl.DrawRectangleRoundedLinesEx(field, .12, 6, 2, memoryGroupPalette[p.pendingGroupColor])
-	name := p.pendingGroup
-	if name == "" {
-		name = "Escribe el nombre del grupo…"
-		simpleui.DrawText(name, field.X+12, field.Y+10, 14, colors.muted)
+	// The placeholder is interface text and is translated on its way out; the
+	// typed name belongs to the user and is drawn exactly as entered, with the
+	// caret appended.
+	if typed := p.pendingGroup; typed == "" {
+		simpleui.DrawText("Escribe el nombre del grupo…", field.X+12, field.Y+10, 14, colors.muted)
 	} else {
-		simpleui.DrawText(name+"|", field.X+12, field.Y+10, 14, colors.text)
+		simpleui.DrawTextRaw(typed+"|", field.X+12, field.Y+10, 14, colors.text)
 	}
 	for i, bounds := range p.groupColorBounds() {
 		c := memoryGroupPalette[i]
@@ -1422,7 +1423,7 @@ func (p *MemoryPanel) DrawMarkerTooltip(x, y, w, h float32) bool {
 	if m.Priority {
 		priority = "  ·  PRIORITARIA"
 	}
-	simpleui.DrawTextStyled(memoryGroup(m)+"  ·  "+status+priority, cardX+14, cardY+118, 12, simpleui.FontSemiBold, accentText)
+	simpleui.DrawTextStyledRaw(i18n.T(memoryGroup(m))+"  ·  "+i18n.T(status)+i18n.T(priority), cardX+14, cardY+118, 12, simpleui.FontSemiBold, accentText)
 	return true
 }
 

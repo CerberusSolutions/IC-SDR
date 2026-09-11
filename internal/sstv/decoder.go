@@ -3,7 +3,6 @@ package sstv
 import (
 	"bufio"
 	"encoding/binary"
-	"fmt"
 	"image"
 	"image/color"
 	"image/png"
@@ -17,6 +16,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"go-zero/internal/i18n"
 )
 
 const candidateCount = 4
@@ -206,7 +207,7 @@ func (d *Decoder) SavePartial() (string, error) {
 	frame.RGB = append([]byte(nil), frame.RGB...)
 	d.mu.RUnlock()
 	if frame.Width <= 0 || frame.Height <= 0 || len(frame.RGB) != frame.Width*frame.Height*3 {
-		return "", fmt.Errorf("todavía no hay una imagen SSTV")
+		return "", i18n.Errorf("todavía no hay una imagen SSTV")
 	}
 	if err := os.MkdirAll(d.outputFolder, 0o755); err != nil {
 		return "", err
@@ -358,14 +359,14 @@ func (d *Decoder) readFrames(reader io.Reader, generation uint64) {
 			return
 		}
 		if string(header[:4]) != "SSTV" || header[4] != 1 {
-			d.fail(generation, fmt.Errorf("protocolo de imagen inválido"))
+			d.fail(generation, i18n.Errorf("protocolo de imagen inválido"))
 			return
 		}
 		typeID, channel := header[5], int(binary.LittleEndian.Uint16(header[6:8]))
 		payloadSize := int(binary.LittleEndian.Uint32(header[8:12]))
 		sequence := int(binary.LittleEndian.Uint32(header[12:16]))
 		if channel < 0 || channel > candidateCount || payloadSize < 0 || payloadSize > 2_000_000 {
-			d.fail(generation, fmt.Errorf("paquete SSTV fuera de rango"))
+			d.fail(generation, i18n.Errorf("paquete SSTV fuera de rango"))
 			return
 		}
 		payload := make([]byte, payloadSize)

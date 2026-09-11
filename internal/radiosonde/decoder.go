@@ -5,7 +5,6 @@ import (
 	"bufio"
 	"encoding/binary"
 	"encoding/json"
-	"fmt"
 	"io"
 	"math"
 	"os/exec"
@@ -15,6 +14,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"go-zero/internal/i18n"
 )
 
 var Families = []string{"RS41", "DFM", "M10/M20"}
@@ -99,10 +100,10 @@ func Arguments(family string, rate float64, frequency, center int64) (string, []
 	names := map[string]string{"RS41": "rs41mod", "DFM": "dfm09mod", "M10/M20": "m10m20mod"}
 	name, ok := names[family]
 	if !ok {
-		return "", nil, fmt.Errorf("familia no válida: %s", family)
+		return "", nil, i18n.Errorf("familia no válida: %s", family)
 	}
 	if math.IsNaN(rate) || math.IsInf(rate, 0) || rate < 96000 || rate > 20e6 || frequency <= 0 || math.Abs(float64(frequency-center))+24000 >= rate/2 {
-		return "", nil, fmt.Errorf("canal fuera de la captura IQ o tasa no válida")
+		return "", nil, i18n.Errorf("canal fuera de la captura IQ o tasa no válida")
 	}
 	if runtime.GOOS == "windows" {
 		name += ".exe"

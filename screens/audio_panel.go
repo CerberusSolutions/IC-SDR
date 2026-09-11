@@ -7,6 +7,8 @@ import (
 	"go-zero/simpleui"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
+
+	"go-zero/internal/i18n"
 )
 
 type AudioPanel struct {
@@ -145,7 +147,7 @@ func (p *AudioPanel) apply() {
 	if p.screen.receiver != nil {
 		p.screen.receiver.SetFMDeemphasis(p.deemphasisUs)
 	}
-	p.profileButton.SetLabel("COMP. " + p.profile)
+	p.profileButton.SetLabel("COMP. " + i18n.T(p.profile))
 	p.deemphasisButton.SetLabel(fmt.Sprintf("DE-EMPH %d us", p.deemphasisUs))
 }
 

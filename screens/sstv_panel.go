@@ -215,7 +215,7 @@ func (p *SSTVPanel) DrawPanel() {
 	if strings.Contains(p.status.State, "IMAGE") || p.status.Progress > 0 {
 		stateColor = colors.green
 	}
-	drawSmallText(p.status.State+" · "+p.displayMode(), 1006, 751, stateColor)
+	drawSmallText(i18n.T(p.status.State)+" · "+p.displayMode(), 1006, 751, stateColor)
 	drawSmallText(i18n.Tf("PROGRESO %d%%   SYNC %d%%   COLA %d   DROP %d", p.status.Progress, p.status.SyncPercent, p.status.Queued, p.status.Dropped), 1006, 774, colors.text)
 	bar := rl.Rectangle{X: 1006, Y: 799, Width: 550, Height: 10}
 	rl.DrawRectangleRec(bar, colors.grid)

@@ -141,3 +141,14 @@ func Catalogue() map[string]string {
 	}
 	return copied
 }
+
+// Errorf translates a Spanish format string and returns the resulting error.
+// It behaves exactly like fmt.Errorf, %w wrapping included.
+//
+// Errors built this way are shown to the user: the receiver puts its failure
+// text straight into the status line. The message has to be translated where
+// it is built, because once fmt has substituted the arguments the result no
+// longer matches any catalogue key.
+func Errorf(format string, args ...any) error {
+	return fmt.Errorf(T(format), args...)
+}

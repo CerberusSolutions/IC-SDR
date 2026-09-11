@@ -177,9 +177,9 @@ func (p *TETRAPanel) applyAudioPolicy() {
 	}
 	p.feedback = i18n.T("ESCUCHA ") + i18n.T(mode)
 	if p.clearOnly {
-		p.feedback += " · SOLO ABIERTA"
+		p.feedback += i18n.T(" · SOLO ABIERTA")
 	} else {
-		p.feedback += " · INCLUYE CIFRADA"
+		p.feedback += i18n.T(" · INCLUYE CIFRADA")
 	}
 }
 func (p *TETRAPanel) Close() {
@@ -391,7 +391,7 @@ func (p *TETRAPanel) DrawPanel() {
 	}
 	// Draw each live value in its own fixed column. A single formatted string
 	// shifts every field whenever a signed value gains or loses a digit.
-	drawTETRAStatusField("ESTADO", status.State, toolContentX, toolY+72, 185)
+	drawTETRAStatusField("ESTADO", i18n.T(status.State), toolContentX, toolY+72, 185)
 	drawTETRAStatusField("NIVEL", fmt.Sprintf("%6.1f dBFS", status.LevelDBFS), 555, toolY+72, 125)
 	drawTETRAStatusField("CALIDAD", fmt.Sprintf("%3.0f %%", status.Quality), 690, toolY+72, 115)
 	drawTETRAStatusField("AFC", fmt.Sprintf("%+6.0f Hz", status.FrequencyErrorHz), 815, toolY+72, 120)
@@ -430,5 +430,5 @@ func drawTETRAStatusField(label, value string, x, y, width float32) {
 		runes := []rune(value)
 		value = string(runes[:maxChars-1]) + "…"
 	}
-	simpleui.DrawText(value, valueX, y-1, 13, colors.text)
+	simpleui.DrawTextRaw(value, valueX, y-1, 13, colors.text)
 }

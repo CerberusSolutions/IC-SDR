@@ -61,6 +61,7 @@ func (v *aprsViewer) read() {
 	}
 }
 func (v *aprsViewer) draw() {
+	FollowPersistedLanguage()
 	v.read()
 	rl.DrawRectangle(0, 0, 1450, 760, colors.background)
 	simpleui.DrawTextStyled("CAPTURAS APRS", 28, 24, 22, simpleui.FontSemiBold, colors.cyan)
@@ -106,17 +107,17 @@ func (v *aprsViewer) draw() {
 			v.selected = index
 		}
 		simpleui.DrawTextStyled(p.Received.Format("2006-01-02 15:04:05"), 28, y, 12, simpleui.FontMono, colors.text)
-		simpleui.DrawTextStyled(short(p.Source, 13), 195, y, 12, simpleui.FontSemiBold, colors.cyan)
-		simpleui.DrawText(p.Type, 315, y, 12, colors.green)
-		simpleui.DrawText(short(p.Destination, 12), 420, y, 12, colors.text)
+		simpleui.DrawTextStyledRaw(short(p.Source, 13), 195, y, 12, simpleui.FontSemiBold, colors.cyan)
+		simpleui.DrawTextRaw(p.Type, 315, y, 12, colors.green)
+		simpleui.DrawTextRaw(short(p.Destination, 12), 420, y, 12, colors.text)
 		route := p.Path
 		if route == "" {
 			route = "DIRECTO"
 		}
-		simpleui.DrawText(short(route, 24), 530, y, 12, colors.text)
-		simpleui.DrawText(short(p.Coordinates, 22), 750, y, 12, colors.text)
+		simpleui.DrawTextRaw(short(route, 24), 530, y, 12, colors.text)
+		simpleui.DrawTextRaw(short(p.Coordinates, 22), 750, y, 12, colors.text)
 		simpleui.DrawText(levelText(p.ReceiveLevel), 950, y, 12, colors.text)
-		simpleui.DrawText(short(p.Summary, 49), 1020, y, 12, colors.text)
+		simpleui.DrawTextRaw(short(p.Summary, 49), 1020, y, 12, colors.text)
 	}
 	drawPanel(20, 610, 1410, 125)
 	simpleui.DrawTextStyled("TRAMA AX.25 / APRS", 32, 620, 13, simpleui.FontSemiBold, colors.cyan)

@@ -277,12 +277,12 @@ func (p *APRSPanel) DrawPanel() {
 		stateColor = colors.red
 	}
 	rl.DrawCircle(720, 646, 6, stateColor)
-	simpleui.DrawTextStyled(i18n.Tf("%s · %.3f MHz · NIVEL %s · RX %d · ERR %+.0f Hz", status.State, float64(p.screen.frequencyHz)/1e6, levelText(status.AudioLevel), status.PacketCount, status.FrequencyErrorHz), 735, 638, 12, simpleui.FontSemiBold, colors.muted)
+	simpleui.DrawTextStyled(i18n.Tf("%s · %.3f MHz · NIVEL %s · RX %d · ERR %+.0f Hz", i18n.T(status.State), float64(p.screen.frequencyHz)/1e6, levelText(status.AudioLevel), status.PacketCount, status.FrequencyErrorHz), 735, 638, 12, simpleui.FontSemiBold, colors.muted)
 	drawPanel(40, 712, 220, 94)
 	simpleui.DrawTextStyled("RECEPTOR", 52, 721, 12, simpleui.FontSemiBold, colors.cyan)
 	simpleui.DrawText(fmt.Sprintf("KISS  %s", i18n.T(map[bool]string{true: "CONECTADO", false: "ESPERANDO"}[status.KISS])), 52, 745, 13, colors.text)
 	simpleui.DrawText(i18n.Tf("COLA %d/16 · DROP %d", status.Queued, status.Dropped), 52, 766, 12, colors.text)
-	simpleui.DrawText(short(status.Detail, 28), 52, 787, 12, colors.muted)
+	simpleui.DrawText(short(i18n.T(status.Detail), 28), 52, 787, 12, colors.muted)
 	if p.view == aprsViewRadar {
 		p.drawRadar()
 		return
@@ -328,26 +328,26 @@ func (p *APRSPanel) drawTable(packets []aprs.Packet) {
 			typeColor = colors.orange
 		}
 		simpleui.DrawTextStyled(packet.Received.Format("15:04:05"), 288, y, 12, simpleui.FontMono, colors.text)
-		simpleui.DrawTextStyled(short(packet.Source, 13), 365, y, 12, simpleui.FontSemiBold, colors.cyan)
-		simpleui.DrawText(packet.Type, 485, y, 12, typeColor)
-		simpleui.DrawText(short(packet.Destination, 12), 590, y, 12, colors.text)
+		simpleui.DrawTextStyledRaw(short(packet.Source, 13), 365, y, 12, simpleui.FontSemiBold, colors.cyan)
+		simpleui.DrawTextRaw(packet.Type, 485, y, 12, typeColor)
+		simpleui.DrawTextRaw(short(packet.Destination, 12), 590, y, 12, colors.text)
 		path := packet.Path
 		if path == "" {
 			path = "DIRECTO"
 		}
-		simpleui.DrawText(short(path, 25), 700, y, 12, colors.text)
+		simpleui.DrawTextRaw(short(path, 25), 700, y, 12, colors.text)
 		info := packet.Summary
 		if p.view == aprsViewRaw {
 			info = packet.Raw
 		} else if p.view == aprsViewStations && packet.Coordinates != "—" {
 			info = packet.Coordinates + " · " + packet.Summary
 		}
-		simpleui.DrawText(short(info, 43), 900, y, 12, colors.text)
+		simpleui.DrawTextRaw(short(info, 43), 900, y, 12, colors.text)
 		simpleui.DrawText(levelText(packet.ReceiveLevel), 1230, y, 12, colors.text)
 	}
 	if p.selected >= 0 && p.selected < len(packets) {
 		packet := packets[p.selected]
-		simpleui.DrawText(short(packet.Raw, 42), 1290, 744, 12, colors.muted)
+		simpleui.DrawTextRaw(short(packet.Raw, 42), 1290, 744, 12, colors.muted)
 	}
 }
 func (p *APRSPanel) drawRadar() {
@@ -375,7 +375,7 @@ func (p *APRSPanel) drawRadar() {
 		x := cx + float32((v.Longitude-(minLon+maxLon)/2)/lonSpan)*80
 		y := cy - float32((v.Latitude-(minLat+maxLat)/2)/latSpan)*72
 		rl.DrawCircle(int32(x), int32(y), 4, colors.green)
-		simpleui.DrawText(v.Source, x+7, y-6, 12, colors.text)
+		simpleui.DrawTextRaw(v.Source, x+7, y-6, 12, colors.text)
 	}
 	simpleui.DrawText("VISTA RELATIVA OFFLINE", 290, 725, 12, colors.cyan)
 	simpleui.DrawText(i18n.Tf("%d estaciones con posición", len(packets)), 290, 748, 13, colors.text)

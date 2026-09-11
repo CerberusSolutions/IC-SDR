@@ -3,7 +3,6 @@ package rtl433
 import (
 	"bufio"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -130,7 +129,7 @@ func multichannelCenters(frequencyHz int64, bandwidthHz int) []int64 {
 
 func (d *Decoder) start() {
 	if d.executable == "" {
-		d.setError(errors.New("rtl_433 no configurado"))
+		d.setError(i18n.Errorf("rtl_433 no configurado"))
 		return
 	}
 	listener, err := net.Listen("tcp", "127.0.0.1:0")

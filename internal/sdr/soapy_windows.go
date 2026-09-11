@@ -12,6 +12,8 @@ import (
 	"unsafe"
 
 	"github.com/ebitengine/purego"
+
+	"go-zero/internal/i18n"
 )
 
 const (
@@ -73,7 +75,7 @@ func openSoapy(config Config) (*soapyDevice, error) {
 		config.trace("SoapySDR: driver %s rechazado: %v", candidate.Driver, err)
 		failures = append(failures, fmt.Errorf("%s: %w", candidate.Driver, err))
 	}
-	return nil, fmt.Errorf("no se encontró RSP ni RTL-SDR: %w", errors.Join(failures...))
+	return nil, i18n.Errorf("no se encontró RSP ni RTL-SDR: %w", errors.Join(failures...))
 }
 
 func deviceCandidates(config Config) []Config {

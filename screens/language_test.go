@@ -163,6 +163,7 @@ func TestSetLanguageRefreshesComposedLabels(t *testing.T) {
 	// test cannot call CreateControls a second time. Build only the control
 	// setLanguage has to refresh, exactly as CreateControls builds it.
 	screen := NewMainScreen(nil)
+	screen.settingsPath = filepath.Join(t.TempDir(), "settings.json")
 	screen.themeButton = simpleui.NewButton("themeButtonUnderTest", 0, 0, 190, 40,
 		i18n.T("ESTILO  ")+i18n.T(themeDisplayName(screen.themeName)), 13)
 	before := screen.themeButton.Label()
@@ -180,8 +181,22 @@ func TestSetLanguageRefreshesComposedLabels(t *testing.T) {
 	if screen.language != i18n.English || i18n.Current() != i18n.English {
 		t.Fatalf("language not applied: screen=%q process=%q", screen.language, i18n.Current())
 	}
-	if !screen.settingsDirty {
-		t.Fatalf("changing the language did not mark the settings for saving")
+	// The choice is written out immediately rather than on the usual debounce,
+	// because the viewer windows are separate processes that learn the language
+	// by reading this file.
+	saved, err := os.ReadFile(screen.settingsPath)
+	if err != nil {
+		t.Fatalf("settings were not written on a language change: %v", err)
+	}
+	var persisted persistedAppSettings
+	if err := json.Unmarshal(saved, &persisted); err != nil {
+		t.Fatal(err)
+	}
+	if persisted.Language != string(i18n.English) {
+		t.Fatalf("persisted language = %q, want %q", persisted.Language, i18n.English)
+	}
+	if screen.settingsDirty {
+		t.Fatalf("settings still pending after a language change")
 	}
 }
 

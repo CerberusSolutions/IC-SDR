@@ -174,7 +174,7 @@ func (p *AISPanel) DrawPanel() {
 		status = p.screen.receiver.AISStatus()
 		vessels = p.screen.receiver.AISVessels()
 	}
-	simpleui.DrawText(i18n.Tf("AIS MARÍTIMO · 161.975 / 162.025 MHz · %s · %d barcos · %d mensajes", status.State, len(vessels), status.Messages), 40, toolY+7, 12, colors.cyan)
+	simpleui.DrawText(i18n.Tf("AIS MARÍTIMO · 161.975 / 162.025 MHz · %s · %d barcos · %d mensajes", i18n.T(status.State), len(vessels), status.Messages), 40, toolY+7, 12, colors.cyan)
 	if status.Error != "" {
 		simpleui.DrawText(sondeClip(i18n.T(status.Error), 100), 570, toolY+38, 12, colors.red)
 	} else {
@@ -211,7 +211,7 @@ func (p *AISPanel) DrawPanel() {
 		}
 		values := []string{name, v.LastSeen.Local().Format("15:04:05"), lat, lon, speed, course, v.StatusText, v.Destination}
 		for j, value := range values {
-			simpleui.DrawText(sondeClip(value, 24), cols[j].x, toolY+101+float32(i)*23, 12, colors.text)
+			simpleui.DrawTextRaw(sondeClip(value, 24), cols[j].x, toolY+101+float32(i)*23, 12, colors.text)
 		}
 	}
 	if len(vessels) == 0 {

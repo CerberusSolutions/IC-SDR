@@ -159,7 +159,7 @@ func (p *UtilitiesSidebar) Draw() {
 		p.skip.SetLabel("SQL OFF")
 	}
 	rl.DrawCircle(28, 817, 5, statusColor)
-	simpleui.DrawTextStyled(status+"  "+formatRecordingDuration(state.DurationSeconds), 40, 809, 12, simpleui.FontMono, colors.text)
+	simpleui.DrawTextStyled(i18n.T(status)+"  "+formatRecordingDuration(state.DurationSeconds), 40, 809, 12, simpleui.FontMono, colors.text)
 	if len(state.RecentFiles) > 0 {
 		simpleui.DrawText(trimMemory(filepath.Base(state.RecentFiles[0]), 31), 24, 873, 10, colors.muted)
 	}
@@ -184,7 +184,7 @@ func (p *UtilitiesSidebar) drawMemoryTable(memory *MemoryPanel) {
 			groupText, rowText = selectionText, selectionText
 		}
 		simpleui.DrawText(trimMemory(memoryGroup(m), 9), x+7, yy, 13, groupText)
-		simpleui.DrawText(trimMemory(m.Name, 14), x+92, yy, 13, rowText)
+		simpleui.DrawTextRaw(trimMemory(m.Name, 14), x+92, yy, 13, rowText)
 		simpleui.DrawText(fmt.Sprintf("%.5f", float64(m.FrequencyHz)/1e6), x+215, yy, 13, rowText)
 	}
 }

@@ -295,7 +295,7 @@ func (p *RTL433Panel) DrawPanel() {
 		status = p.screen.receiver.RTL433Status()
 	}
 	simpleui.DrawTextStyled("RTL_433 · DISPOSITIVOS ISM", 40, 638, 16, simpleui.FontSemiBold, rl.Color{R: 175, G: 145, B: 245, A: 255})
-	simpleui.DrawTextStyled(fmt.Sprintf("%s · %d kS/s · EVENTOS %d · DROP %d", status.State, status.SampleRate/1000, status.Events, status.Dropped), 700, 638, 12, simpleui.FontSemiBold, colors.muted)
+	simpleui.DrawTextStyled(fmt.Sprintf("%s · %d kS/s · EVENTOS %d · DROP %d", i18n.T(status.State), status.SampleRate/1000, status.Events, status.Dropped), 700, 638, 12, simpleui.FontSemiBold, colors.muted)
 	simpleui.DrawTextStyled(i18n.Tf("OBJETIVO %.3f MHz", float64(p.targetHz)/1e6), 1230, 666, 14, simpleui.FontSemiBold, colors.orange)
 	drawPanel(40, 716, 300, 90)
 	simpleui.DrawTextStyled("ANCHO IQ DEL DECODER", 52, 719, 12, simpleui.FontSemiBold, colors.cyan)
@@ -315,12 +315,12 @@ func (p *RTL433Panel) DrawPanel() {
 			rl.DrawRectangle(357, int32(y-2), 840, 15, rl.Color{R: 25, G: 83, B: 116, A: 220})
 		}
 		simpleui.DrawTextStyled(e.Received.Format("15:04:05"), 365, y, 12, simpleui.FontMono, colors.text)
-		simpleui.DrawText(short(e.Model+" / "+e.Type, 23), 440, y, 12, colors.text)
-		simpleui.DrawText(short(e.ID, 10), 650, y, 12, colors.text)
-		simpleui.DrawText(short(e.Channel, 7), 745, y, 12, colors.text)
+		simpleui.DrawTextRaw(short(e.Model+" / "+e.Type, 23), 440, y, 12, colors.text)
+		simpleui.DrawTextRaw(short(e.ID, 10), 650, y, 12, colors.text)
+		simpleui.DrawTextRaw(short(e.Channel, 7), 745, y, 12, colors.text)
 		simpleui.DrawText(fmt.Sprintf("%.3f", e.FreqMHz), 825, y, 12, colors.text)
 		simpleui.DrawText(fmt.Sprintf("%.1f/%.1f", e.RSSI, e.SNR), 920, y, 12, colors.text)
-		simpleui.DrawText(short(e.Summary, 18), 1025, y, 12, colors.text)
+		simpleui.DrawTextRaw(short(e.Summary, 18), 1025, y, 12, colors.text)
 	}
 	if p.selected >= 0 && p.selected < len(events) {
 		drawPanel(1220, 716, 330, 90)

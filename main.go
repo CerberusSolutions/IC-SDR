@@ -195,7 +195,7 @@ func startStartupWatchdog() func() {
 			select {
 			case <-ticker.C:
 				stage, _ := startupStage.Load().(string)
-				log.Printf("ESPERA · el proceso sigue dentro de: %s", stage)
+				log.Printf(i18n.T("ESPERA · el proceso sigue dentro de: %s"), stage)
 				if startupLogFile != nil {
 					_ = startupLogFile.Sync()
 				}

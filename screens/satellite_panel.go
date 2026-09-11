@@ -435,7 +435,7 @@ func (p *SatellitePanel) DrawPanel() {
 			break
 		}
 	}
-	eye := "BAJO EL HORIZONTE"
+	eye := i18n.T("BAJO EL HORIZONTE")
 	c := colors.muted
 	if selected.Visible {
 		eye = i18n.T("VISIBLE DESDE ") + snap.Station.Name
@@ -466,13 +466,13 @@ func (p *SatellitePanel) DrawPanel() {
 			if rl.CheckCollisionPointRec(mouse, actual) {
 				rl.DrawRectangleRec(legacy, mixColor(colors.panelAlt, colors.cyan, .12))
 			}
-			simpleui.DrawText(sondeClip(sat.Name, 23), 40, y, 11, colors.text)
-			simpleui.DrawText(sondeClip(sat.Group, 16), 235, y, 11, colors.text)
+			simpleui.DrawTextRaw(sondeClip(sat.Name, 23), 40, y, 11, colors.text)
+			simpleui.DrawTextRaw(sondeClip(sat.Group, 16), 235, y, 11, colors.text)
 			simpleui.DrawText(strconv.Itoa(sat.NORAD), 365, y, 11, colors.text)
 		}
 	}
 
 	simpleui.DrawText("SELECCIÓN ACTUAL", 470, toolY+119, 10, colors.muted)
 	simpleui.DrawText(fmt.Sprintf("AZ %.1f°   EL %.1f°   ALT %.0f km   DIST %.0f km", selected.Azimuth, selected.Elevation, selected.AltitudeKM, selected.RangeKM), 495, toolY+142, 12, colors.text)
-	simpleui.DrawText(fmt.Sprintf("%s · %s · %d objetos · %s", freq, selected.Mode, len(snap.Satellites), snap.Source), 495, toolY+168, 11, colors.muted)
+	simpleui.DrawText(i18n.Tf("%s · %s · %d objetos · %s", freq, i18n.T(selected.Mode), len(snap.Satellites), snap.Source), 495, toolY+168, 11, colors.muted)
 }

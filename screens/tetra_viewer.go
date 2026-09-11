@@ -74,11 +74,12 @@ func (v *tetraViewer) readSettings() {
 	}
 }
 func (v *tetraViewer) draw() {
+	FollowPersistedLanguage()
 	v.read()
 	v.readSettings()
 	rl.DrawRectangle(0, 0, 1400, 780, colors.background)
 	simpleui.DrawTextStyled("MONITOR TETRA", 28, 22, 24, simpleui.FontSemiBold, colors.cyan)
-	state := v.snapshot.Status.State
+	state := i18n.T(v.snapshot.Status.State)
 	if state == "" {
 		state = "ESPERANDO DATOS"
 	}
@@ -197,11 +198,11 @@ func (v *tetraViewer) drawGroups() {
 			if call.Encrypted {
 				cipher, cipherColor = "CIFRADO", colors.orange
 			}
-			simpleui.DrawTextStyled(fmt.Sprintf("%d", call.ID), 48, y, 13, simpleui.FontMono, colors.text)
+			simpleui.DrawTextStyledRaw(fmt.Sprintf("%d", call.ID), 48, y, 13, simpleui.FontMono, colors.text)
 			simpleui.DrawTextStyled(fmt.Sprintf("%08d", call.SSI), 180, y, 13, simpleui.FontMono, colors.text)
 			simpleui.DrawText(fmt.Sprintf("TS%d", call.Slot), 390, y, 13, colors.text)
 			simpleui.DrawText(fmt.Sprintf("%d", call.UsageMarker), 465, y, 13, colors.text)
-			simpleui.DrawText(activity+" · "+call.State, 570, y, 12, stateColor)
+			simpleui.DrawText(i18n.T(activity)+" · "+i18n.T(call.State), 570, y, 12, stateColor)
 			simpleui.DrawText(cipher, 830, y, 12, cipherColor)
 			simpleui.DrawText(viewerTime(call.LastSeen), 1010, y, 12, colors.text)
 		}
@@ -220,7 +221,7 @@ func (v *tetraViewer) drawGroups() {
 		if i%2 == 0 {
 			rl.DrawRectangle(38, int32(y-3), 1300, 27, colors.panel)
 		}
-		simpleui.DrawTextStyled(fmt.Sprintf("%08d", g.ID), 48, y, 14, simpleui.FontMono, colors.text)
+		simpleui.DrawTextStyledRaw(fmt.Sprintf("%08d", g.ID), 48, y, 14, simpleui.FontMono, colors.text)
 		simpleui.DrawText(g.Name, 270, y, 13, colors.text)
 		simpleui.DrawText(g.LastEvent, 530, y, 13, colors.cyan)
 		simpleui.DrawText(fmt.Sprintf("%d eventos", g.Calls), 790, y, 13, colors.text)
@@ -243,7 +244,7 @@ func (v *tetraViewer) drawMessages() {
 		}
 		simpleui.DrawText(viewerTime(m.Time), 48, y, 13, colors.muted)
 		simpleui.DrawTextStyled(m.Kind, 190, y, 13, simpleui.FontSemiBold, colors.cyan)
-		simpleui.DrawText(sondeClip(m.Text, 105), 390, y, 13, colors.text)
+		simpleui.DrawTextRaw(sondeClip(m.Text, 105), 390, y, 13, colors.text)
 	}
 }
 func (v *tetraViewer) drawUsers() {
@@ -293,7 +294,7 @@ func (v *tetraViewer) drawNetwork() {
 		y := 220 + float32(i/3)*130
 		drawPanel(x, y, 390, 100)
 		simpleui.DrawText(c.label, x+18, y+15, 12, colors.muted)
-		simpleui.DrawTextStyled(c.value, x+18, y+43, 30, simpleui.FontMono, colors.text)
+		simpleui.DrawTextStyledRaw(c.value, x+18, y+43, 30, simpleui.FontMono, colors.text)
 	}
 	simpleui.DrawText(i18n.Tf("SYNC %d · NTS1 %d · CRC fallidos %d · calidad %.0f%%", s.SyncHits, s.NormalBursts, s.BSCHFailures, s.Quality), 48, 505, 14, colors.green)
 	if s.Network.Valid {
@@ -350,7 +351,7 @@ func (v *tetraViewer) drawGPS() {
 func (v *tetraViewer) drawConsole() {
 	s := v.snapshot.Status
 	simpleui.DrawTextStyled("CONSOLA TÉCNICA", 48, 175, 18, simpleui.FontSemiBold, colors.cyan)
-	lines := []string{i18n.Tf("Estado              %s", s.State), i18n.Tf("Entrada/canal       %.0f / %.0f S/s", s.InputRate, s.OutputRate), i18n.Tf("Nivel/calidad/AFC   %.1f dBFS / %.1f%% / %+.1f Hz", s.LevelDBFS, s.Quality, s.FrequencyErrorHz), i18n.Tf("Timing fase/error   %d / %.3f rad", s.TimingPhase, s.TimingError), fmt.Sprintf("BER / FER           %.2f%% / %.1f%%", s.BER, s.FER), i18n.Tf("Decisión de audio   %s", s.LastAudioDecision), i18n.Tf("Rechazo E/U/I/D     %d / %d / %d / %d", s.AudioRejectedEncrypted, s.AudioRejectedUnselected, s.AudioRejectedInactive, s.AudioRejectedDamaged), fmt.Sprintf("SYNC / NTS          %d / %d", s.SyncHits, s.NormalBursts), i18n.Tf("Actividad TS        %d / %d / %d / %d", s.SlotBursts[0], s.SlotBursts[1], s.SlotBursts[2], s.SlotBursts[3]), i18n.Tf("SCH válido/fallo    %d / %d", s.SCHValid, s.SCHCRCFailures), fmt.Sprintf("MAC R/F/B/S         %d / %d / %d / %d", s.MACPDUTypes[0], s.MACPDUTypes[1], s.MACPDUTypes[2], s.MACPDUTypes[3]), i18n.Tf("RESOURCE/rechazo    %d / %d", s.MACResources, s.MACRejected), i18n.Tf("Asignación/cifrado  %d / %d", s.MACChannelAlloc, s.MACEncrypted), i18n.Tf("LLC tipos 0..7      %d %d %d %d %d %d %d %d", s.LLCTypes[0], s.LLCTypes[1], s.LLCTypes[2], s.LLCTypes[3], s.LLCTypes[4], s.LLCTypes[5], s.LLCTypes[6], s.LLCTypes[7]), i18n.Tf("LLC tipos 8..15     %d %d %d %d %d %d %d %d", s.LLCTypes[8], s.LLCTypes[9], s.LLCTypes[10], s.LLCTypes[11], s.LLCTypes[12], s.LLCTypes[13], s.LLCTypes[14], s.LLCTypes[15]), i18n.Tf("Fragmentos/unidos   %d / %d", s.LLCFragments, s.LLCReassembled), fmt.Sprintf("MLE MM/CMCE/SNDCP   %d / %d / %d", s.MLEProtocols[1], s.MLEProtocols[2], s.MLEProtocols[4]), i18n.Tf("LLC no CMCE/rechazo %d / %d", s.LLCNonCMCE, s.LLCRejected), i18n.Tf("Eventos CMCE        %d", s.CMCEEvents)}
+	lines := []string{i18n.Tf("Estado              %s", i18n.T(s.State)), i18n.Tf("Entrada/canal       %.0f / %.0f S/s", s.InputRate, s.OutputRate), i18n.Tf("Nivel/calidad/AFC   %.1f dBFS / %.1f%% / %+.1f Hz", s.LevelDBFS, s.Quality, s.FrequencyErrorHz), i18n.Tf("Timing fase/error   %d / %.3f rad", s.TimingPhase, s.TimingError), fmt.Sprintf("BER / FER           %.2f%% / %.1f%%", s.BER, s.FER), i18n.Tf("Decisión de audio   %s", i18n.T(s.LastAudioDecision)), i18n.Tf("Rechazo E/U/I/D     %d / %d / %d / %d", s.AudioRejectedEncrypted, s.AudioRejectedUnselected, s.AudioRejectedInactive, s.AudioRejectedDamaged), fmt.Sprintf("SYNC / NTS          %d / %d", s.SyncHits, s.NormalBursts), i18n.Tf("Actividad TS        %d / %d / %d / %d", s.SlotBursts[0], s.SlotBursts[1], s.SlotBursts[2], s.SlotBursts[3]), i18n.Tf("SCH válido/fallo    %d / %d", s.SCHValid, s.SCHCRCFailures), fmt.Sprintf("MAC R/F/B/S         %d / %d / %d / %d", s.MACPDUTypes[0], s.MACPDUTypes[1], s.MACPDUTypes[2], s.MACPDUTypes[3]), i18n.Tf("RESOURCE/rechazo    %d / %d", s.MACResources, s.MACRejected), i18n.Tf("Asignación/cifrado  %d / %d", s.MACChannelAlloc, s.MACEncrypted), i18n.Tf("LLC tipos 0..7      %d %d %d %d %d %d %d %d", s.LLCTypes[0], s.LLCTypes[1], s.LLCTypes[2], s.LLCTypes[3], s.LLCTypes[4], s.LLCTypes[5], s.LLCTypes[6], s.LLCTypes[7]), i18n.Tf("LLC tipos 8..15     %d %d %d %d %d %d %d %d", s.LLCTypes[8], s.LLCTypes[9], s.LLCTypes[10], s.LLCTypes[11], s.LLCTypes[12], s.LLCTypes[13], s.LLCTypes[14], s.LLCTypes[15]), i18n.Tf("Fragmentos/unidos   %d / %d", s.LLCFragments, s.LLCReassembled), fmt.Sprintf("MLE MM/CMCE/SNDCP   %d / %d / %d", s.MLEProtocols[1], s.MLEProtocols[2], s.MLEProtocols[4]), i18n.Tf("LLC no CMCE/rechazo %d / %d", s.LLCNonCMCE, s.LLCRejected), i18n.Tf("Eventos CMCE        %d", s.CMCEEvents)}
 	for i, line := range lines {
 		simpleui.DrawTextStyled(line, 58, 216+float32(i)*29, 15, simpleui.FontMono, colors.text)
 	}

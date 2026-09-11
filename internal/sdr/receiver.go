@@ -392,7 +392,7 @@ func (receiver *Receiver) RestartSSTV() bool {
 }
 func (receiver *Receiver) SaveSSTVPartial() (string, error) {
 	if receiver.sstv == nil {
-		return "", fmt.Errorf("SSTV no disponible")
+		return "", i18n.Errorf("SSTV no disponible")
 	}
 	return receiver.sstv.SavePartial()
 }
