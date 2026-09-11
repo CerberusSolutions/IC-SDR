@@ -4,8 +4,6 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"math"
 	"net/http"
 	"os"
@@ -128,7 +126,7 @@ func (t *Tracker) Refresh(ctx context.Context) error {
 		}
 	}
 	if remoteCount == 0 {
-		return fmt.Errorf("no se pudo actualizar el catálogo orbital (%d grupos fallaron)", failures)
+		return i18n.Errorf("no se pudo actualizar el catálogo orbital (%d grupos fallaron)", failures)
 	}
 	list := make([]Satellite, 0, len(seen))
 	for _, sat := range seen {
@@ -205,14 +203,14 @@ func parseTLE(r interface{ Read([]byte) (int, error) }, group string) ([]Satelli
 		}
 	}
 	if len(out) == 0 {
-		return nil, errors.New("respuesta sin TLE")
+		return nil, i18n.Errorf("respuesta sin TLE")
 	}
 	return out, nil
 }
 
 func makeSatellite(name, l1, l2, group string) (Satellite, error) {
 	if len(l1) < 32 || len(l2) < 63 {
-		return Satellite{}, errors.New("TLE incompleto")
+		return Satellite{}, i18n.Errorf("TLE incompleto")
 	}
 	norad, _ := strconv.Atoi(strings.TrimSpace(l1[2:7]))
 	year, _ := strconv.Atoi(l1[18:20])
@@ -225,7 +223,7 @@ func makeSatellite(name, l1, l2, group string) (Satellite, error) {
 	epoch := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC).Add(time.Duration((day - 1) * float64(24*time.Hour)))
 	f := strings.Fields(l2)
 	if len(f) < 8 {
-		return Satellite{}, errors.New("línea 2 inválida")
+		return Satellite{}, i18n.Errorf("línea 2 inválida")
 	}
 	inc, _ := strconv.ParseFloat(f[2], 64)
 	raan, _ := strconv.ParseFloat(f[3], 64)
@@ -317,7 +315,7 @@ func (t *Tracker) loadCache() error {
 	}
 	var c cachedCatalog
 	if json.Unmarshal(data, &c) != nil || len(c.Satellites) == 0 {
-		return errors.New("cache inválida")
+		return i18n.Errorf("cache inválida")
 	}
 	t.satellites = c.Satellites
 	t.source = i18n.T("caché CelesTrak · ") + c.Saved.Format("02 Jan 15:04")

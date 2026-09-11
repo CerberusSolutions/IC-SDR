@@ -4,13 +4,14 @@ import (
 	"bufio"
 	"encoding/binary"
 	"encoding/json"
-	"errors"
 	"io"
 	"math"
 	"os/exec"
 	"strconv"
 	"sync"
 	"time"
+
+	"go-zero/internal/i18n"
 )
 
 const CenterFrequencyHz int64 = 162_000_000
@@ -93,7 +94,7 @@ func (d *Decoder) Configure(enabled bool) {
 		return
 	}
 	if d.executable == "" {
-		d.fail(errors.New("AIS-catcher no configurado"))
+		d.fail(i18n.Errorf("AIS-catcher no configurado"))
 		return
 	}
 	d.queue = make(chan []float32, 16)

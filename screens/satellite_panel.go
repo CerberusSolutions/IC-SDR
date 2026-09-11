@@ -435,7 +435,7 @@ func (p *SatellitePanel) DrawPanel() {
 			break
 		}
 	}
-	eye := "BAJO EL HORIZONTE"
+	eye := i18n.T("BAJO EL HORIZONTE")
 	c := colors.muted
 	if selected.Visible {
 		eye = i18n.T("VISIBLE DESDE ") + snap.Station.Name

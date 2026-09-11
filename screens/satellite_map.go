@@ -280,7 +280,7 @@ func (v *satelliteMap) drawDetails(b rl.Rectangle) {
 		simpleui.DrawText("Pulsa un satélite en el mapa o en el catálogo", b.X+14, b.Y+48, 13, colors.muted)
 		return
 	}
-	eye := "BAJO EL HORIZONTE"
+	eye := i18n.T("BAJO EL HORIZONTE")
 	c := colors.muted
 	if s.Visible {
 		eye = i18n.T("VISIBLE DESDE ") + v.snapshot.Station.Name

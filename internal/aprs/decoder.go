@@ -3,7 +3,6 @@ package aprs
 import (
 	"bufio"
 	"encoding/binary"
-	"fmt"
 	"io"
 	"net"
 	"os"
@@ -16,6 +15,8 @@ import (
 	"time"
 
 	"go-zero/internal/resources"
+
+	"go-zero/internal/i18n"
 )
 
 type Status struct {
@@ -79,7 +80,7 @@ func (d *Decoder) Configure(enabled bool, tuned, center int64, bandwidth int) {
 }
 func (d *Decoder) start() {
 	if d.executable == "" {
-		d.setError(fmt.Errorf("Dire Wolf no configurado"))
+		d.setError(i18n.Errorf("Dire Wolf no configurado"))
 		return
 	}
 	port, err := freePort()
@@ -133,7 +134,7 @@ func freePort() (int, error) {
 		_ = listener.Close()
 		return port, nil
 	}
-	return 0, fmt.Errorf("no hay un puerto KISS libre entre 18101 y 18199")
+	return 0, i18n.Errorf("no hay un puerto KISS libre entre 18101 y 18199")
 }
 func (d *Decoder) runtimeConfig(port int) (string, error) {
 	data, err := os.ReadFile(d.configTemplate)

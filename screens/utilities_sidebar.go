@@ -159,7 +159,7 @@ func (p *UtilitiesSidebar) Draw() {
 		p.skip.SetLabel("SQL OFF")
 	}
 	rl.DrawCircle(28, 817, 5, statusColor)
-	simpleui.DrawTextStyled(status+"  "+formatRecordingDuration(state.DurationSeconds), 40, 809, 12, simpleui.FontMono, colors.text)
+	simpleui.DrawTextStyled(i18n.T(status)+"  "+formatRecordingDuration(state.DurationSeconds), 40, 809, 12, simpleui.FontMono, colors.text)
 	if len(state.RecentFiles) > 0 {
 		simpleui.DrawText(trimMemory(filepath.Base(state.RecentFiles[0]), 31), 24, 873, 10, colors.muted)
 	}

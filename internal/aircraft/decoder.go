@@ -3,7 +3,6 @@ package aircraft
 import (
 	"bufio"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -13,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"go-zero/internal/i18n"
 )
 
 const (
@@ -90,7 +91,7 @@ func (d *Decoder) Configure(enabled bool, mode string) {
 	var err error
 	if mode == Mode1090 {
 		if d.exe1090 == "" {
-			d.fail(errors.New("dump1090 no configurado"))
+			d.fail(i18n.Errorf("dump1090 no configurado"))
 			return
 		}
 		d.cmd = exec.Command(d.exe1090, "--ifile", "-", "--raw")
@@ -104,7 +105,7 @@ func (d *Decoder) Configure(enabled bool, mode string) {
 		}
 	} else {
 		if d.exe978 == "" || d.exeUATText == "" {
-			d.fail(errors.New("dump978 no configurado"))
+			d.fail(i18n.Errorf("dump978 no configurado"))
 			return
 		}
 		d.cmd = exec.Command(d.exe978)

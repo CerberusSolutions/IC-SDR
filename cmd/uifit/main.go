@@ -48,6 +48,12 @@ func main() {
 		fmt.Fprintln(os.Stderr, "uifit: cannot read the interface source:", err)
 		os.Exit(2)
 	}
+
+	stranded, err := checkReachable(root)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "uifit: cannot read the interface source:", err)
+		os.Exit(2)
+	}
 	all := append(scanned, computedGeometry()...)
 
 	rl.SetTraceLogLevel(rl.LogError)
@@ -55,15 +61,26 @@ func main() {
 	rl.InitWindow(320, 200, "uifit")
 	defer rl.CloseWindow()
 
+	for _, item := range stranded {
+		fmt.Printf("uifit: UNTRANSLATED %-26s %-24s %q\n", item.where, "("+item.reason+")", item.text)
+	}
+
 	overflows := check(all)
 	byKind := map[string]int{}
 	for _, m := range all {
 		byKind[m.kind]++
 	}
 	fmt.Printf("uifit: %d texts checked in %d languages %v\n", len(all), len(i18n.Languages), byKind)
+	if len(stranded) > 0 {
+		fmt.Printf("uifit: %d strings are joined to something before they are drawn, so they reach the user in Spanish\n", len(stranded))
+	}
+	if len(overflows) == 0 && len(stranded) == 0 {
+		fmt.Println("uifit: every string fits its control and reaches the translator")
+		return
+	}
 	if len(overflows) == 0 {
 		fmt.Println("uifit: every string fits its control")
-		return
+		os.Exit(1)
 	}
 	for _, o := range overflows {
 		fmt.Printf("uifit: OVERFLOW %-36s %-9s avail=%6.1f width=%6.1f  %q\n", o.where, o.kind, o.avail, o.width, o.drawn)

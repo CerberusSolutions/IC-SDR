@@ -201,7 +201,7 @@ func (v *tetraViewer) drawGroups() {
 			simpleui.DrawTextStyled(fmt.Sprintf("%08d", call.SSI), 180, y, 13, simpleui.FontMono, colors.text)
 			simpleui.DrawText(fmt.Sprintf("TS%d", call.Slot), 390, y, 13, colors.text)
 			simpleui.DrawText(fmt.Sprintf("%d", call.UsageMarker), 465, y, 13, colors.text)
-			simpleui.DrawText(activity+" · "+call.State, 570, y, 12, stateColor)
+			simpleui.DrawText(i18n.T(activity)+" · "+i18n.T(call.State), 570, y, 12, stateColor)
 			simpleui.DrawText(cipher, 830, y, 12, cipherColor)
 			simpleui.DrawText(viewerTime(call.LastSeen), 1010, y, 12, colors.text)
 		}

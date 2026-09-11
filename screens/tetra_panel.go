@@ -177,9 +177,9 @@ func (p *TETRAPanel) applyAudioPolicy() {
 	}
 	p.feedback = i18n.T("ESCUCHA ") + i18n.T(mode)
 	if p.clearOnly {
-		p.feedback += " · SOLO ABIERTA"
+		p.feedback += i18n.T(" · SOLO ABIERTA")
 	} else {
-		p.feedback += " · INCLUYE CIFRADA"
+		p.feedback += i18n.T(" · INCLUYE CIFRADA")
 	}
 }
 func (p *TETRAPanel) Close() {
