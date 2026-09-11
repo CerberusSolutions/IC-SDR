@@ -47,11 +47,16 @@ jobs:
       # bytes: a checkout that translated line endings would report every file
       # as unformatted. It only parses the source, so the Windows-only packages
       # are covered even though they do not build on this platform.
+      # gofmt is taken from the toolchain Go actually resolved rather than
+      # whichever copy happens to be first on PATH: the two can disagree about
+      # column alignment, and a disagreement here is a CI failure nobody can
+      # reproduce locally.
       - name: Check formatting
         run: |
-          unformatted=$(gofmt -l .)
+          gofmt="$(go env GOROOT)/bin/gofmt"
+          unformatted=$("$gofmt" -l .)
           if [ -n "$unformatted" ]; then
-            echo "These files are not gofmt-clean:"
+            echo "These files are not gofmt-clean under $(go version):"
             echo "$unformatted"
             exit 1
           fi
