@@ -79,5 +79,28 @@ func computedGeometry() []measurement {
 		add("scan_panel button detail", button.detail, button.width-10, 12, simpleui.FontRegular)
 	}
 
+	// dmr_panel.go draws its status block as free-standing text inside the
+	// panel at (38,665,210,142). Glyphs keep their full width while the panel
+	// around them is compressed, so the budget is the remaining panel width
+	// scaled by toolContentScaleX. Nothing in the source ties this text to that
+	// panel, which is why it has to be listed here.
+	for _, line := range []string{
+		"COLOR CODE  --",
+		"PLL  BLOQUEADO",
+		"PLL  SIN LOCK",
+		"SYNC 0   NIVEL 0",
+	} {
+		add("dmr_panel status block", line, (248-52)*toolContentScaleX, 13, simpleui.FontRegular)
+	}
+	// This line already sits right on the panel edge in Spanish, so the budget
+	// is the width of the original rather than a guess at the panel geometry:
+	// the translation must not make it any wider than it already was.
+	add("dmr_panel status block", "COLA %d/%d   DROP %d   UND %d", 136, 12, simpleui.FontRegular)
+
+	// aprs_panel.go does the same inside its own status panel.
+	for _, line := range []string{"KISS  CONECTADO", "KISS  ESPERANDO", "COLA 0/16 · DROP 0"} {
+		add("aprs_panel status block", line, (248-52)*toolContentScaleX, 13, simpleui.FontRegular)
+	}
+
 	return found
 }

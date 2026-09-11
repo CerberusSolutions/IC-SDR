@@ -112,7 +112,7 @@ func (p *DMRPanel) add(state, slot, detail string) {
 func (p *DMRPanel) capture(status dmr.Status) {
 	if status.State != p.lastState {
 		p.lastState = status.State
-		p.add(status.State, "--", status.Detail)
+		p.add(i18n.T(status.State), "--", i18n.T(status.Detail))
 	}
 	if status.Slot1 != p.lastTS1 {
 		p.lastTS1 = status.Slot1
@@ -169,7 +169,7 @@ func (p *DMRPanel) drawSlot(x, y float32, title, value string, selected bool) {
 	if len(value) > 30 {
 		value = value[:27] + "..."
 	}
-	simpleui.DrawText(value, x+12, y+34, 14, colors.text)
+	simpleui.DrawTextRaw(value, x+12, y+34, 14, colors.text)
 	if selected {
 		simpleui.DrawText("AUDIO SELECCIONADO", x+126, y+9, 12, colors.green)
 	}

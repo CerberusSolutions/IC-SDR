@@ -1043,7 +1043,7 @@ func (screen *MainScreen) drawTuningCursorLabel(cursorX, y, graphX, graphWidth f
 	plateBackground.A = 248
 	rl.DrawRectangleRounded(plate, .14, 8, plateBackground)
 	rl.DrawRectangleRoundedLinesEx(plate, .14, 8, 1.5, markerColor)
-	simpleui.DrawTextStyled(frequency, plate.X+(plate.Width-freqWidth)/2, plate.Y+6, frequencySize, simpleui.FontMono, simpleui.EnsureTextContrast(markerColor, plateBackground))
+	simpleui.DrawTextStyledRaw(frequency, plate.X+(plate.Width-freqWidth)/2, plate.Y+6, frequencySize, simpleui.FontMono, simpleui.EnsureTextContrast(markerColor, plateBackground))
 	simpleui.DrawTextStyled(bandwidth, plate.X+(plate.Width-detailWidth)/2, plate.Y+29, detailSize, simpleui.FontSemiBold, simpleui.EnsureTextContrast(colors.orange, plateBackground))
 }
 

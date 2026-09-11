@@ -184,7 +184,7 @@ func (p *UtilitiesSidebar) drawMemoryTable(memory *MemoryPanel) {
 			groupText, rowText = selectionText, selectionText
 		}
 		simpleui.DrawText(trimMemory(memoryGroup(m), 9), x+7, yy, 13, groupText)
-		simpleui.DrawText(trimMemory(m.Name, 14), x+92, yy, 13, rowText)
+		simpleui.DrawTextRaw(trimMemory(m.Name, 14), x+92, yy, 13, rowText)
 		simpleui.DrawText(fmt.Sprintf("%.5f", float64(m.FrequencyHz)/1e6), x+215, yy, 13, rowText)
 	}
 }

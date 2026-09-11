@@ -196,6 +196,7 @@ func (v *aircraftMap) grid(b rl.Rectangle) {
 	}
 }
 func (v *aircraftMap) draw() {
+	FollowPersistedLanguage()
 	v.read()
 	rl.ClearBackground(rl.Color{R: 6, G: 12, B: 19, A: 255})
 	b := rl.Rectangle{X: 20, Y: 78, Width: 970, Height: 690}
@@ -285,6 +286,6 @@ func (v *aircraftMap) details() {
 		if z.v == "" {
 			z.v = "--"
 		}
-		simpleui.DrawText(sondeClip(z.v, 29), x, y+15, 13, colors.text)
+		simpleui.DrawTextRaw(sondeClip(z.v, 29), x, y+15, 13, colors.text)
 	}
 }

@@ -256,6 +256,7 @@ func (v *aisMap) drawScale(b rl.Rectangle) {
 }
 
 func (v *aisMap) draw() {
+	FollowPersistedLanguage()
 	v.read()
 	rl.ClearBackground(rl.Color{R: 6, G: 12, B: 19, A: 255})
 	b := rl.Rectangle{X: 20, Y: 78, Width: 970, Height: 690}
@@ -294,7 +295,7 @@ func (v *aisMap) draw() {
 		if name == "" {
 			name = fmt.Sprintf("%09d", s.MMSI)
 		}
-		simpleui.DrawText(sondeClip(name, 19), p.X+12, p.Y-7, 10, colors.text)
+		simpleui.DrawTextRaw(sondeClip(name, 19), p.X+12, p.Y-7, 10, colors.text)
 	}
 	v.drawScale(b)
 	simpleui.DrawText("MAPA AIS EN VIVO", 24, 20, 24, colors.cyan)
@@ -331,6 +332,6 @@ func (v *aisMap) drawDetails() {
 		if val == "" {
 			val = "--"
 		}
-		simpleui.DrawText(sondeClip(val, 29), x, y+15, 13, colors.text)
+		simpleui.DrawTextRaw(sondeClip(val, 29), x, y+15, 13, colors.text)
 	}
 }

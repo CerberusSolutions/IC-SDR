@@ -527,7 +527,7 @@ var englishCatalogue = map[string]string{
 	"POSICIONES GPS / LIP":               "GPS / LIP POSITIONS",
 	"USUARIOS DETECTADOS · MAC-RESOURCE": "DETECTED USERS · MAC-RESOURCE",
 	"SDS TEXTO":                          "SDS TEXT",
-	"SOLO SIN CIFRAR":                    "UNENCRYPTED ONLY",
+	"SOLO SIN CIFRAR":                    "CLEAR ONLY",
 	" · SOLO ABIERTA":                    " · CLEAR ONLY",
 	" · INCLUYE CIFRADA":                 " · INCLUDES ENCRYPTED",
 	"SYNC TETRA REAL":                    "REAL TETRA SYNC",
@@ -695,7 +695,7 @@ var englishCatalogue = map[string]string{
 	// catalogue entry.
 	"CORRECCIÓN DE FRECUENCIA   %.1f ppm":           "FREQUENCY CORRECTION   %.1f ppm",
 	"Conservar frecuencia actual":                   "Keep current frequency",
-	"COLA %d/%d   DROP %d   UND %d":                 "QUEUE %d/%d   DROP %d   UND %d",
+	"COLA %d/%d   DROP %d   UND %d":                 "QUEUE %d/%d  DROP %d  UND %d",
 	"COLA %d/16 · DROP %d":                          "QUEUE %d/16 · DROP %d",
 	"PROGRESO %d%%   SYNC %d%%   COLA %d   DROP %d": "PROGRESS %d%%   SYNC %d%%   QUEUE %d   DROP %d",
 	"TONO %.0f Hz  %.0f dB":                         "TONE %.0f Hz  %.0f dB",
@@ -704,4 +704,6 @@ var englishCatalogue = map[string]string{
 	// The audio processor stores this profile name, so only the display is
 	// translated; the stored value stays as the author wrote it.
 	"SUAVE": "SMOOTH",
+
+	"%s · %s · %d objetos · %s": "%s · %s · %d objects · %s",
 }

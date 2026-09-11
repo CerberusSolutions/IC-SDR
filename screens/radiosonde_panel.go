@@ -155,7 +155,7 @@ func (p *RadiosondePanel) DrawPanel() {
 }
 
 func (p *RadiosondePanel) drawTelemetry(status radiosonde.Status, events []radiosonde.Event) {
-	simpleui.DrawText(i18n.Tf("RADIOSONDAS · %.6f MHz · %s · %d tramas · %d bloques perdidos", float64(p.targetHz)/1e6, status.State, len(events), status.Dropped), 40, toolY+7, 12, colors.cyan)
+	simpleui.DrawText(i18n.Tf("RADIOSONDAS · %.6f MHz · %s · %d tramas · %d bloques perdidos", float64(p.targetHz)/1e6, i18n.T(status.State), len(events), status.Dropped), 40, toolY+7, 12, colors.cyan)
 	if status.Error != "" {
 		simpleui.DrawText(sondeClip(i18n.T(status.Error), 72), 1020, toolY+36, 12, colors.red)
 	} else {

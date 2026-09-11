@@ -208,7 +208,7 @@ func (p *AircraftPanel) DrawPanel() {
 		status = p.screen.receiver.AircraftStatus()
 		list = p.screen.receiver.Aircraft()
 	}
-	simpleui.DrawText(i18n.Tf("VIGILANCIA AÉREA · %s · %.3f MHz · %s · %d aeronaves · %d mensajes", p.mode, float64(p.frequency())/1e6, status.State, len(list), status.Messages), 40, toolY+7, 12, colors.cyan)
+	simpleui.DrawText(i18n.Tf("VIGILANCIA AÉREA · %s · %.3f MHz · %s · %d aeronaves · %d mensajes", i18n.T(p.mode), float64(p.frequency())/1e6, i18n.T(status.State), len(list), status.Messages), 40, toolY+7, 12, colors.cyan)
 	if status.Error != "" {
 		simpleui.DrawText(sondeClip(i18n.T(status.Error), 72), 880, toolY+38, 12, colors.red)
 	} else {
@@ -241,7 +241,7 @@ func (p *AircraftPanel) DrawPanel() {
 		}
 		values := []string{name + " / " + a.ICAO, a.Source, a.LastSeen.Local().Format("15:04:05"), alt, f(a.Speed, "%.0f"), f(a.Track, "%.0f°"), f(a.VerticalRate, "%.0f"), f(a.Latitude, "%.5f"), f(a.Longitude, "%.5f")}
 		for j, value := range values {
-			simpleui.DrawText(sondeClip(value, 20), cols[j].x, toolY+101+float32(i)*23, 12, colors.text)
+			simpleui.DrawTextRaw(sondeClip(value, 20), cols[j].x, toolY+101+float32(i)*23, 12, colors.text)
 		}
 	}
 	if len(list) == 0 {

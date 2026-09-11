@@ -107,6 +107,7 @@ func drawVisibilityIndicator(center rl.Vector2, visible bool) {
 	rl.DrawCircleLines(int32(center.X), int32(center.Y), 6, color)
 }
 func (v *satelliteMap) draw() {
+	FollowPersistedLanguage()
 	v.read()
 	rl.ClearBackground(colors.background)
 	left := rl.Rectangle{X: 16, Y: 68, Width: 320, Height: 748}
@@ -194,7 +195,7 @@ func (v *satelliteMap) drawList(b rl.Rectangle) {
 				if s.NORAD == v.selected {
 					c = colors.orange
 				}
-				simpleui.DrawText(name, r.X+43, r.Y+5, 12, c)
+				simpleui.DrawTextRaw(name, r.X+43, r.Y+5, 12, c)
 			}
 			y += 28
 		}
@@ -248,11 +249,11 @@ func (v *satelliteMap) drawMap(b rl.Rectangle) {
 		}
 		p := worldProject(s.Latitude, s.Longitude, b)
 		rl.DrawCircleV(p, 6, c)
-		simpleui.DrawText(sondeClip(s.Name, 18), p.X+9, p.Y-7, 11, c)
+		simpleui.DrawTextRaw(sondeClip(s.Name, 18), p.X+9, p.Y-7, 11, c)
 	}
 	station := worldProject(v.snapshot.Station.Latitude, v.snapshot.Station.Longitude, b)
 	rl.DrawCircleV(station, 5, colors.green)
-	simpleui.DrawText(v.snapshot.Station.Name, station.X+8, station.Y-7, 11, colors.text)
+	simpleui.DrawTextRaw(v.snapshot.Station.Name, station.X+8, station.Y-7, 11, colors.text)
 	rl.DrawRectangleLinesEx(b, 2, colors.border)
 	legendBar := rl.Rectangle{X: b.X + 1, Y: b.Y + b.Height - 28, Width: b.Width - 2, Height: 27}
 	legendBackground := colors.panel
@@ -291,8 +292,8 @@ func (v *satelliteMap) drawDetails(b rl.Rectangle) {
 		rl.DrawLine(int32(x), int32(b.Y+38), int32(x), int32(b.Y+b.Height-12), separator)
 	}
 
-	simpleui.DrawTextStyled(sondeClip(s.Name, 27), b.X+14, b.Y+45, 17, simpleui.FontSemiBold, colors.text)
-	simpleui.DrawText(fmt.Sprintf("NORAD %d · %s", s.NORAD, s.Group), b.X+14, b.Y+72, 12, colors.muted)
+	simpleui.DrawTextStyledRaw(sondeClip(s.Name, 27), b.X+14, b.Y+45, 17, simpleui.FontSemiBold, colors.text)
+	simpleui.DrawTextRaw(fmt.Sprintf("NORAD %d · %s", s.NORAD, s.Group), b.X+14, b.Y+72, 12, colors.muted)
 	simpleui.DrawText(eye, b.X+14, b.Y+105, 12, c)
 
 	x := b.X + 304
@@ -309,11 +310,11 @@ func (v *satelliteMap) drawDetails(b rl.Rectangle) {
 
 	x = b.X + 808
 	simpleui.DrawText("RADIO / TELEMETRÍA", x, b.Y+45, 11, colors.muted)
-	simpleui.DrawText(sondeClip(s.Signal, 28), x, b.Y+72, 13, colors.text)
+	simpleui.DrawTextRaw(sondeClip(s.Signal, 28), x, b.Y+72, 13, colors.text)
 	simpleui.DrawText(i18n.T("Modo          ")+s.Mode, x, b.Y+98, 13, colors.text)
 	frequency := "Downlink    --"
 	if s.DownlinkHz > 0 {
 		frequency = fmt.Sprintf("Downlink    %.6f MHz", float64(s.DownlinkHz)/1e6)
 	}
-	simpleui.DrawText(frequency, x, b.Y+124, 13, colors.text)
+	simpleui.DrawTextRaw(frequency, x, b.Y+124, 13, colors.text)
 }

@@ -67,6 +67,7 @@ func (v *rtl433Viewer) read() {
 	}
 }
 func (v *rtl433Viewer) draw() {
+	FollowPersistedLanguage()
 	v.read()
 	if controlCopyPressed() && v.selected >= 0 && v.selected < len(v.events) {
 		rl.SetClipboardText(rtl433ClipboardText(v.events[v.selected]))
@@ -120,14 +121,14 @@ func (v *rtl433Viewer) draw() {
 		simpleui.DrawTextStyled(e.Received.Format("2006-01-02 15:04:05"), 28, y-1, 13, simpleui.FontMono, colors.text)
 		simpleui.DrawText(fmt.Sprintf("%.3f", e.FreqMHz), 195, y-1, 13, colors.text)
 		simpleui.DrawText(fmt.Sprint(e.Protocol), 300, y-1, 13, colors.text)
-		simpleui.DrawText(short(e.Model, 18), 405, y-1, 13, colors.text)
-		simpleui.DrawText(short(e.Type, 11), 585, y-1, 13, colors.text)
-		simpleui.DrawText(short(e.ID, 10), 705, y-1, 13, colors.text)
-		simpleui.DrawText(short(e.Channel, 6), 820, y-1, 13, colors.text)
+		simpleui.DrawTextRaw(short(e.Model, 18), 405, y-1, 13, colors.text)
+		simpleui.DrawTextRaw(short(e.Type, 11), 585, y-1, 13, colors.text)
+		simpleui.DrawTextRaw(short(e.ID, 10), 705, y-1, 13, colors.text)
+		simpleui.DrawTextRaw(short(e.Channel, 6), 820, y-1, 13, colors.text)
 		simpleui.DrawText(e.Mod, 915, y-1, 13, colors.text)
 		simpleui.DrawText(fmt.Sprintf("%.2f", e.RSSI), 980, y-1, 13, colors.text)
 		simpleui.DrawText(fmt.Sprintf("%.2f", e.SNR), 1050, y-1, 13, colors.text)
-		simpleui.DrawText(short(e.Summary, 27), 1120, y-1, 13, colors.text)
+		simpleui.DrawTextRaw(short(e.Summary, 27), 1120, y-1, 13, colors.text)
 	}
 	drawPanel(20, 610, 1360, 125)
 	simpleui.DrawTextStyled("DETALLE JSON", 32, 620, 13, simpleui.FontSemiBold, colors.cyan)

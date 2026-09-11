@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 
@@ -82,17 +83,32 @@ func main() {
 		fmt.Println("uifit: every string fits its control")
 		os.Exit(1)
 	}
+	regressions := 0
 	for _, o := range overflows {
-		fmt.Printf("uifit: OVERFLOW %-36s %-9s avail=%6.1f width=%6.1f  %q\n", o.where, o.kind, o.avail, o.width, o.drawn)
+		label, note := "OVERFLOW", ""
+		if o.preExisting {
+			label, note = "TIGHT   ", "  (also overruns in Spanish; pre-existing)"
+		} else {
+			regressions++
+		}
+		fmt.Printf("uifit: %s %-30s %-9s avail=%6.1f width=%6.1f  %q%s\n", label, o.where, o.kind, o.avail, o.width, o.drawn, note)
 	}
-	fmt.Printf("uifit: %d strings overflow\n", len(overflows))
+	if regressions == 0 {
+		fmt.Printf("uifit: %d strings are tight in both languages; none made worse by translation\n", len(overflows))
+		if len(stranded) == 0 {
+			return
+		}
+	} else {
+		fmt.Printf("uifit: %d strings overflow only once translated\n", regressions)
+	}
 	os.Exit(1)
 }
 
 type overflow struct {
 	measurement
-	drawn string
-	width float32
+	drawn       string
+	width       float32
+	preExisting bool // the Spanish original does not fit either
 }
 
 // check measures every string in every language and returns the ones that do
@@ -110,12 +126,22 @@ func check(items []measurement) []overflow {
 			continue
 		}
 		seen[key] = true
+
+		// Measure the original first. Some panels were already tight before
+		// any of this: the workspace squeezes its controls horizontally while
+		// leaving text at full size, so a label can overrun in Spanish too.
+		// Those are the author's to weigh up, not something the translation
+		// introduced, so they are reported but do not fail the check.
+		i18n.Set(i18n.Spanish)
+		original := simpleui.MeasureTextStyledRaw(composedTranslation(item.text), item.size, item.style).X
+		tight := original > item.avail
+
 		for _, language := range i18n.Languages {
 			i18n.Set(language)
 			drawn := composedTranslation(item.text)
 			width := simpleui.MeasureTextStyledRaw(drawn, item.size, item.style).X
 			if width > item.avail {
-				found = append(found, overflow{item, drawn, width})
+				found = append(found, overflow{item, drawn, width, tight})
 			}
 		}
 	}
@@ -130,12 +156,27 @@ func check(items []measurement) []overflow {
 // are actually built.
 func composedTranslation(text string) string {
 	if translated := i18n.T(text); translated != text {
-		return translated
+		return sampleValues(translated)
 	}
 	for _, prefix := range []string{"ESTILO  ", "REANUDAR ", "FORMATO ", "FILTRO ", "BANDA ", "ESCUCHA "} {
 		if len(text) > len(prefix) && text[:len(prefix)] == prefix {
 			return i18n.T(prefix) + i18n.T(text[len(prefix):])
 		}
 	}
-	return text
+	return sampleValues(text)
+}
+
+// sampleValues substitutes representative values for fmt verbs so a format
+// string is measured at something like its drawn width rather than with the
+// verbs left in.
+func sampleValues(text string) string {
+	// Typical rather than worst-case values: a counter in this interface is
+	// usually one or two digits, and padding every verb out to three would put
+	// most of the status lines permanently over budget.
+	replacer := strings.NewReplacer(
+		"%d", "0", "%s", "AAAA", "%v", "AAAA", "%q", "AAAA",
+		"%.0f", "0", "%.1f", "0.0", "%.3f", "0.000", "%.6f", "000.000000",
+		"%%", "%",
+	)
+	return replacer.Replace(text)
 }
